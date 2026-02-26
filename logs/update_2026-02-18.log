@@ -1,0 +1,949 @@
+===== 2026-02-18 10:00:01 - Iniciando atualização =====
+[✔] Verificando integridade do APT...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+[✔] Atualizando pacotes...
+Get:1 https://downloads.cursor.com/aptrepo stable InRelease [2.672 B]
+Hit:2 http://archive.ubuntu.com/ubuntu questing InRelease
+Get:3 https://downloads.cursor.com/aptrepo stable/main amd64 Packages [1.465 B]
+Get:4 http://archive.ubuntu.com/ubuntu questing-updates InRelease [136 kB]
+Get:5 http://security.ubuntu.com/ubuntu questing-security InRelease [136 kB]
+Get:6 https://downloads.cursor.com/aptrepo stable/main all Packages [545 B]
+Get:7 https://downloads.cursor.com/aptrepo stable/main arm64 Packages [1.486 B]
+Get:8 http://security.ubuntu.com/ubuntu questing-security/main i386 Packages [104 kB]
+Get:9 http://archive.ubuntu.com/ubuntu questing-backports InRelease [133 kB]
+Get:10 http://security.ubuntu.com/ubuntu questing-security/main amd64 Packages [195 kB]
+Get:11 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 Packages [308 kB]
+Get:12 http://archive.ubuntu.com/ubuntu questing-updates/main i386 Packages [178 kB]
+Get:13 http://archive.ubuntu.com/ubuntu questing-updates/main Translation-en [87,2 kB]
+Get:14 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 Components [38,4 kB]
+Get:15 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 c-n-f Metadata [7.360 B]
+Get:16 http://archive.ubuntu.com/ubuntu questing-updates/restricted amd64 Components [212 B]
+Get:17 http://archive.ubuntu.com/ubuntu questing-updates/universe i386 Packages [112 kB]
+Get:18 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 Packages [200 kB]
+Get:19 http://archive.ubuntu.com/ubuntu questing-updates/universe Translation-en [69,3 kB]
+Get:20 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 Components [42,0 kB]
+Get:21 http://archive.ubuntu.com/ubuntu questing-updates/universe Icons (48x48) [23,6 kB]
+Get:22 http://archive.ubuntu.com/ubuntu questing-updates/universe Icons (64x64) [35,2 kB]
+Get:23 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 c-n-f Metadata [5.044 B]
+Get:24 http://archive.ubuntu.com/ubuntu questing-updates/multiverse amd64 Components [212 B]
+Get:25 http://archive.ubuntu.com/ubuntu questing-backports/main amd64 Components [208 B]
+Get:26 http://archive.ubuntu.com/ubuntu questing-backports/restricted amd64 Components [216 B]
+Get:27 http://archive.ubuntu.com/ubuntu questing-backports/universe amd64 Components [216 B]
+Get:28 http://archive.ubuntu.com/ubuntu questing-backports/multiverse amd64 Components [216 B]
+Get:29 http://security.ubuntu.com/ubuntu questing-security/main Translation-en [53,1 kB]
+Get:30 http://security.ubuntu.com/ubuntu questing-security/main amd64 Components [448 B]
+Get:31 http://security.ubuntu.com/ubuntu questing-security/main amd64 c-n-f Metadata [4.616 B]
+Get:32 http://security.ubuntu.com/ubuntu questing-security/restricted amd64 Packages [152 kB]
+Get:33 http://security.ubuntu.com/ubuntu questing-security/restricted Translation-en [33,0 kB]
+Get:34 http://security.ubuntu.com/ubuntu questing-security/restricted amd64 Components [212 B]
+Get:35 http://security.ubuntu.com/ubuntu questing-security/universe i386 Packages [67,1 kB]
+Get:36 http://security.ubuntu.com/ubuntu questing-security/universe amd64 Packages [119 kB]
+Get:37 http://security.ubuntu.com/ubuntu questing-security/universe Translation-en [38,8 kB]
+Get:38 http://security.ubuntu.com/ubuntu questing-security/universe amd64 Components [10,8 kB]
+Get:39 http://security.ubuntu.com/ubuntu questing-security/universe Icons (48x48) [8.563 B]
+Get:40 http://security.ubuntu.com/ubuntu questing-security/universe Icons (64x64) [13,3 kB]
+Get:41 http://security.ubuntu.com/ubuntu questing-security/universe amd64 c-n-f Metadata [3.360 B]
+Get:42 http://security.ubuntu.com/ubuntu questing-security/multiverse amd64 Components [212 B]
+Fetched 2.321 kB in 15s (156 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Calculating upgrade...
+The following upgrades have been deferred due to phasing:
+  cloud-init cloud-init-base
+The following packages will be upgraded:
+  cpp-11 gcc-11 gcc-11-base libasan6 libasound2-data libasound2t64
+  libasound2t64:i386 libatopology2t64 libfreerdp-client3-3
+  libfreerdp-server3-3 libfreerdp3-3 libgcc-11-dev libgnutls30t64
+  libgnutls30t64:i386 libtsan0 libwinpr3-3 python3-pil systemd-hwe-hwdb
+  wireless-regdb
+19 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+Need to get 42,1 MB of archives.
+After this operation, 134 kB disk space will be freed.
+Get:1 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libgnutls30t64 amd64 3.8.9-3ubuntu2.1 [1.025 kB]
+Get:2 http://archive.ubuntu.com/ubuntu questing-updates/main i386 libgnutls30t64 i386 3.8.9-3ubuntu2.1 [1.033 kB]
+Get:3 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 systemd-hwe-hwdb all 257.7.2 [3.138 B]
+Get:4 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 libasan6 amd64 11.5.0-7ubuntu1.1 [2.232 kB]
+Get:5 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 gcc-11 amd64 11.5.0-7ubuntu1.1 [20,1 MB]
+Get:6 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 libgcc-11-dev amd64 11.5.0-7ubuntu1.1 [2.476 kB]
+Get:7 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 libtsan0 amd64 11.5.0-7ubuntu1.1 [2.227 kB]
+Get:8 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 cpp-11 amd64 11.5.0-7ubuntu1.1 [9.970 kB]
+Get:9 http://archive.ubuntu.com/ubuntu questing-updates/universe amd64 gcc-11-base amd64 11.5.0-7ubuntu1.1 [46,5 kB]
+Get:10 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libatopology2t64 amd64 1.2.14-1ubuntu1.1 [50,4 kB]
+Get:11 http://archive.ubuntu.com/ubuntu questing-updates/main i386 libasound2t64 i386 1.2.14-1ubuntu1.1 [444 kB]
+Get:12 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libasound2t64 amd64 1.2.14-1ubuntu1.1 [409 kB]
+Get:13 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libasound2-data all 1.2.14-1ubuntu1.1 [21,4 kB]
+Get:14 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libfreerdp-server3-3 amd64 3.16.0+dfsg-2ubuntu0.1 [113 kB]
+Get:15 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libfreerdp-client3-3 amd64 3.16.0+dfsg-2ubuntu0.1 [287 kB]
+Get:16 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libfreerdp3-3 amd64 3.16.0+dfsg-2ubuntu0.1 [784 kB]
+Get:17 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 libwinpr3-3 amd64 3.16.0+dfsg-2ubuntu0.1 [373 kB]
+Get:18 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 python3-pil amd64 11.3.0-1ubuntu1.1 [486 kB]
+Get:19 http://archive.ubuntu.com/ubuntu questing-updates/main amd64 wireless-regdb all 2025.10.07-0ubuntu1~25.10.1 [7.534 B]
+Fetched 42,1 MB in 1min 4s (657 kB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 286360 files and directories currently installed.)
+Preparing to unpack .../00-libgnutls30t64_3.8.9-3ubuntu2.1_i386.deb ...
+De-configuring libgnutls30t64:amd64 (3.8.9-3ubuntu2), to allow configuration of libgnutls30t64:i386 (3.8.9-3ubuntu2.1) ...
+Unpacking libgnutls30t64:i386 (3.8.9-3ubuntu2.1) over (3.8.9-3ubuntu2) ...
+Preparing to unpack .../01-libgnutls30t64_3.8.9-3ubuntu2.1_amd64.deb ...
+Unpacking libgnutls30t64:amd64 (3.8.9-3ubuntu2.1) over (3.8.9-3ubuntu2) ...
+Preparing to unpack .../02-systemd-hwe-hwdb_257.7.2_all.deb ...
+Unpacking systemd-hwe-hwdb (257.7.2) over (257.7.1) ...
+Preparing to unpack .../03-libasan6_11.5.0-7ubuntu1.1_amd64.deb ...
+Unpacking libasan6:amd64 (11.5.0-7ubuntu1.1) over (11.5.0-7ubuntu1) ...
+Preparing to unpack .../04-gcc-11_11.5.0-7ubuntu1.1_amd64.deb ...
+Unpacking gcc-11 (11.5.0-7ubuntu1.1) over (11.5.0-7ubuntu1) ...
+Preparing to unpack .../05-libgcc-11-dev_11.5.0-7ubuntu1.1_amd64.deb ...
+Unpacking libgcc-11-dev:amd64 (11.5.0-7ubuntu1.1) over (11.5.0-7ubuntu1) ...
+Preparing to unpack .../06-libtsan0_11.5.0-7ubuntu1.1_amd64.deb ...
+Unpacking libtsan0:amd64 (11.5.0-7ubuntu1.1) over (11.5.0-7ubuntu1) ...
+Preparing to unpack .../07-cpp-11_11.5.0-7ubuntu1.1_amd64.deb ...
+Unpacking cpp-11 (11.5.0-7ubuntu1.1) over (11.5.0-7ubuntu1) ...
+Preparing to unpack .../08-gcc-11-base_11.5.0-7ubuntu1.1_amd64.deb ...
+Unpacking gcc-11-base:amd64 (11.5.0-7ubuntu1.1) over (11.5.0-7ubuntu1) ...
+Preparing to unpack .../09-libatopology2t64_1.2.14-1ubuntu1.1_amd64.deb ...
+Unpacking libatopology2t64:amd64 (1.2.14-1ubuntu1.1) over (1.2.14-1ubuntu1) ...
+Preparing to unpack .../10-libasound2t64_1.2.14-1ubuntu1.1_amd64.deb ...
+De-configuring libasound2t64:i386 (1.2.14-1ubuntu1), to allow configuration of libasound2t64:amd64 (1.2.14-1ubuntu1.1) ...
+Unpacking libasound2t64:amd64 (1.2.14-1ubuntu1.1) over (1.2.14-1ubuntu1) ...
+Preparing to unpack .../11-libasound2t64_1.2.14-1ubuntu1.1_i386.deb ...
+Unpacking libasound2t64:i386 (1.2.14-1ubuntu1.1) over (1.2.14-1ubuntu1) ...
+Preparing to unpack .../12-libasound2-data_1.2.14-1ubuntu1.1_all.deb ...
+Unpacking libasound2-data (1.2.14-1ubuntu1.1) over (1.2.14-1ubuntu1) ...
+Preparing to unpack .../13-libfreerdp-server3-3_3.16.0+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libfreerdp-server3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) over (3.16.0+dfsg-2) ...
+Preparing to unpack .../14-libfreerdp-client3-3_3.16.0+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libfreerdp-client3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) over (3.16.0+dfsg-2) ...
+Preparing to unpack .../15-libfreerdp3-3_3.16.0+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libfreerdp3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) over (3.16.0+dfsg-2) ...
+Preparing to unpack .../16-libwinpr3-3_3.16.0+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libwinpr3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) over (3.16.0+dfsg-2) ...
+Preparing to unpack .../17-python3-pil_11.3.0-1ubuntu1.1_amd64.deb ...
+Unpacking python3-pil:amd64 (11.3.0-1ubuntu1.1) over (11.3.0-1ubuntu1) ...
+Preparing to unpack .../18-wireless-regdb_2025.10.07-0ubuntu1~25.10.1_all.deb ...
+Unpacking wireless-regdb (2025.10.07-0ubuntu1~25.10.1) over (2025.07.10-0ubuntu1) ...
+Setting up libwinpr3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) ...
+Setting up libgnutls30t64:amd64 (3.8.9-3ubuntu2.1) ...
+Setting up libgnutls30t64:i386 (3.8.9-3ubuntu2.1) ...
+Setting up gcc-11-base:amd64 (11.5.0-7ubuntu1.1) ...
+Setting up wireless-regdb (2025.10.07-0ubuntu1~25.10.1) ...
+Setting up libasan6:amd64 (11.5.0-7ubuntu1.1) ...
+Setting up libasound2-data (1.2.14-1ubuntu1.1) ...
+Setting up python3-pil:amd64 (11.3.0-1ubuntu1.1) ...
+Setting up libasound2t64:amd64 (1.2.14-1ubuntu1.1) ...
+Setting up libasound2t64:i386 (1.2.14-1ubuntu1.1) ...
+Setting up systemd-hwe-hwdb (257.7.2) ...
+Setting up libfreerdp3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) ...
+Setting up libtsan0:amd64 (11.5.0-7ubuntu1.1) ...
+Setting up cpp-11 (11.5.0-7ubuntu1.1) ...
+Setting up libatopology2t64:amd64 (1.2.14-1ubuntu1.1) ...
+Setting up libfreerdp-server3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) ...
+Setting up libfreerdp-client3-3:amd64 (3.16.0+dfsg-2ubuntu0.1) ...
+Setting up libgcc-11-dev:amd64 (11.5.0-7ubuntu1.1) ...
+Setting up gcc-11 (11.5.0-7ubuntu1.1) ...
+Processing triggers for libc-bin (2.42-0ubuntu3.1) ...
+Processing triggers for man-db (2.13.1-1) ...
+Processing triggers for udev (257.9-0ubuntu2.1) ...
+Processing triggers for hicolor-icon-theme (0.18-2) ...
+[ℹ] Pacotes ainda atualizáveis:
+Listing...
+cloud-init-base/questing-updates,questing-updates 25.3-0ubuntu1~25.10.1 all [upgradable from: 25.3~2g890873f5-0ubuntu2]
+cloud-init/questing-updates,questing-updates 25.3-0ubuntu1~25.10.1 all [upgradable from: 25.3~2g890873f5-0ubuntu2]
+[✔] Limpando pacotes antigos...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Solving dependencies...
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Del cursor 2.4.36-1770931159 [176 MB]
+[🔒] Atualizando definições do ClamAV...
+Wed Feb 18 10:01:38 2026 -> ClamAV update process started at Wed Feb 18 10:01:38 2026
+Wed Feb 18 10:01:38 2026 -> daily database available for update (local version: 27911, remote version: 27916)
+Wed Feb 18 10:01:42 2026 -> Testing database: '/var/lib/clamav/tmp.513494b563/clamav-07e97b3671fbe0bb6e9ff932f8f32e04.tmp-daily.cld' ...
+Wed Feb 18 10:01:44 2026 -> Database test passed.
+Wed Feb 18 10:01:44 2026 -> daily.cld updated (version: 27916, sigs: 355121, f-level: 90, builder: svc.clamav-publisher)
+Wed Feb 18 10:01:44 2026 -> main.cld database is up-to-date (version: 63, sigs: 3287027, f-level: 90, builder: tomjudge)
+Wed Feb 18 10:01:44 2026 -> bytecode.cld database is up-to-date (version: 339, sigs: 80, f-level: 90, builder: nrandolp)
+Wed Feb 18 10:01:44 2026 -> Clamd successfully notified about the update.
+[🕷️ ] Verificando rootkits (chkrootkit)...
+[🕷️ ] Verificando rootkits (rkhunter)...
+[🧱] Verificando estado do AppArmor...
+apparmor module is loaded.
+311 profiles are loaded.
+228 profiles are in enforce mode.
+   /snap/core/17272/usr/lib/snapd/snap-confine
+   /snap/core/17272/usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /snap/snapd/25577/usr/lib/snapd/snap-confine
+   /snap/snapd/25577/usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /snap/snapd/25935/usr/lib/snapd/snap-confine
+   /snap/snapd/25935/usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /usr/bin/freshclam
+   /usr/bin/man
+   /usr/bin/papers
+   /usr/bin/papers-previewer
+   /usr/bin/papers-previewer//sanitized_helper
+   /usr/bin/papers-thumbnailer
+   /usr/bin/papers//sanitized_helper
+   /usr/bin/papers//snap_browsers
+   /usr/bin/wsdd
+   /usr/lib/NetworkManager/nm-dhcp-client.action
+   /usr/lib/NetworkManager/nm-dhcp-helper
+   /usr/lib/connman/scripts/dhclient-script
+   /usr/lib/cups/backend/cups-pdf
+   /usr/lib/snapd/snap-confine
+   /usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /usr/libexec/geoclue
+   /usr/sbin/clamd
+   /usr/sbin/cups-browsed
+   /usr/sbin/cupsd
+   /usr/sbin/cupsd//third_party
+   /{,usr/}sbin/dhclient
+   alsamixer
+   babeld
+   bfdd
+   bgpd
+   bwrap
+   cursor_sandbox
+   cursor_sandbox_remote
+   dig
+   dnstracer
+   docker-default
+   eigrpd
+   fabricd
+   fusermount3
+   gs
+   hostname
+   hwctl
+   hwctl//kmod
+   iotop-c
+   ipa_verify
+   ippusbxd
+   irssi
+   isisd
+   john
+   ldpd
+   libreoffice-senddoc
+   libreoffice-soffice//gpg
+   libreoffice-xpdfimport
+   libvirtd
+   libvirtd//qemu_bridge_helper
+   linux-boot-prober
+   locale
+   locale//compressor
+   lsb_release
+   lsblk
+   lsusb
+   man_filter
+   man_groff
+   mbsync
+   mosquitto
+   msmtp
+   msmtp//helpers
+   nc.openbsd
+   nhrpd
+   notify-send
+   nslookup
+   nvidia_modprobe
+   nvidia_modprobe//kmod
+   openvpn
+   openvpn//ip
+   openvpn//update-resolv
+   os-prober
+   ospf6d
+   ospfd
+   pathd
+   pbrd
+   pim6d
+   pimd
+   plasmashell
+   plasmashell//QtWebEngineProcess
+   proftpd
+   qpdf
+   ripd
+   ripngd
+   rsyslogd
+   rygel
+   rygel//mx-extract
+   sbuild
+   sbuild-abort
+   sbuild-adduser
+   sbuild-apt
+   sbuild-checkpackages
+   sbuild-clean
+   sbuild-createchroot
+   sbuild-destroychroot
+   sbuild-distupgrade
+   sbuild-hold
+   sbuild-shell
+   sbuild-unhold
+   sbuild-update
+   sbuild-upgrade
+   snap-update-ns.chromium
+   snap-update-ns.core
+   snap-update-ns.cups
+   snap-update-ns.desktop-security-center
+   snap-update-ns.firefox
+   snap-update-ns.firmware-updater
+   snap-update-ns.mesa-2404
+   snap-update-ns.ngrok
+   snap-update-ns.postman
+   snap-update-ns.prompting-client
+   snap-update-ns.slack
+   snap-update-ns.snap-store
+   snap-update-ns.snapd-desktop-integration
+   snap-update-ns.thunderbird
+   snap-update-ns.vlc
+   snap.chromium.chromedriver
+   snap.chromium.chromium
+   snap.chromium.daemon
+   snap.chromium.hook.configure
+   snap.core.hook.configure
+   snap.cups.accept
+   snap.cups.cancel
+   snap.cups.cups-browsed
+   snap.cups.cupsaccept
+   snap.cups.cupsctl
+   snap.cups.cupsd
+   snap.cups.cupsdisable
+   snap.cups.cupsenable
+   snap.cups.cupsfilter
+   snap.cups.cupsreject
+   snap.cups.cupstestppd
+   snap.cups.driverless
+   snap.cups.gs
+   snap.cups.ippeveprinter
+   snap.cups.ippfind
+   snap.cups.ipptool
+   snap.cups.lp
+   snap.cups.lpadmin
+   snap.cups.lpc
+   snap.cups.lpinfo
+   snap.cups.lpoptions
+   snap.cups.lpq
+   snap.cups.lpr
+   snap.cups.lprm
+   snap.cups.lpstat
+   snap.cups.reject
+   snap.desktop-security-center.desktop-security-center
+   snap.desktop-security-center.hook.configure
+   snap.firefox.firefox
+   snap.firefox.geckodriver
+   snap.firefox.hook.configure
+   snap.firefox.hook.disconnect-plug-host-hunspell
+   snap.firefox.hook.install
+   snap.firefox.hook.post-refresh
+   snap.firmware-updater.firmware-notifier
+   snap.firmware-updater.firmware-updater
+   snap.firmware-updater.firmware-updater-app
+   snap.firmware-updater.hook.configure
+   snap.mesa-2404.component-monitor
+   snap.mesa-2404.hook.connect-plug-kernel-gpu-2404
+   snap.mesa-2404.hook.disconnect-plug-kernel-gpu-2404
+   snap.mesa-2404.hook.install
+   snap.mesa-2404.hook.post-refresh
+   snaapparmor module is loaded.
+311 profiles are loaded.
+228 profiles are in enforce mode.
+   /snap/core/17272/usr/lib/snapd/snap-confine
+   /snap/core/17272/usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /snap/snapd/25577/usr/lib/snapd/snap-confine
+   /snap/snapd/25577/usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /snap/snapd/25935/usr/lib/snapd/snap-confine
+   /snap/snapd/25935/usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /usr/bin/freshclam
+   /usr/bin/man
+   /usr/bin/papers
+   /usr/bin/papers-previewer
+   /usr/bin/papers-previewer//sanitized_helper
+   /usr/bin/papers-thumbnailer
+   /usr/bin/papers//sanitized_helper
+   /usr/bin/papers//snap_browsers
+   /usr/bin/wsdd
+   /usr/lib/NetworkManager/nm-dhcp-client.action
+   /usr/lib/NetworkManager/nm-dhcp-helper
+   /usr/lib/connman/scripts/dhclient-script
+   /usr/lib/cups/backend/cups-pdf
+   /usr/lib/snapd/snap-confine
+   /usr/lib/snapd/snap-confine//mount-namespace-capture-helper
+   /usr/libexec/geoclue
+   /usr/sbin/clamd
+   /usr/sbin/cups-browsed
+   /usr/sbin/cupsd
+   /usr/sbin/cupsd//third_party
+   /{,usr/}sbin/dhclient
+   alsamixer
+   babeld
+   bfdd
+   bgpd
+   bwrap
+   cursor_sandbox
+   cursor_sandbox_remote
+   dig
+   dnstracer
+   docker-default
+   eigrpd
+   fabricd
+   fusermount3
+   gs
+   hostname
+   hwctl
+   hwctl//kmod
+   iotop-c
+   ipa_verify
+   ippusbxd
+   irssi
+   isisd
+   john
+   ldpd
+   libreoffice-senddoc
+   libreoffice-soffice//gpg
+   libreoffice-xpdfimport
+   libvirtd
+   libvirtd//qemu_bridge_helper
+   linux-boot-prober
+   locale
+   locale//compressor
+   lsb_release
+   lsblk
+   lsusb
+   man_filter
+   man_groff
+   mbsync
+   mosquitto
+   msmtp
+   msmtp//helpers
+   nc.openbsd
+   nhrpd
+   notify-send
+   nslookup
+   nvidia_modprobe
+   nvidia_modprobe//kmod
+   openvpn
+   openvpn//ip
+   openvpn//update-resolv
+   os-prober
+   ospf6d
+   ospfd
+   pathd
+   pbrd
+   pim6d
+   pimd
+   plasmashell
+   plasmashell//QtWebEngineProcess
+   proftpd
+   qpdf
+   ripd
+   ripngd
+   rsyslogd
+   rygel
+   rygel//mx-extract
+   sbuild
+   sbuild-abort
+   sbuild-adduser
+   sbuild-apt
+   sbuild-checkpackages
+   sbuild-clean
+   sbuild-createchroot
+   sbuild-destroychroot
+   sbuild-distupgrade
+   sbuild-hold
+   sbuild-shell
+   sbuild-unhold
+   sbuild-update
+   sbuild-upgrade
+   snap-update-ns.chromium
+   snap-update-ns.core
+   snap-update-ns.cups
+   snap-update-ns.desktop-security-center
+   snap-update-ns.firefox
+   snap-update-ns.firmware-updater
+   snap-update-ns.mesa-2404
+   snap-update-ns.ngrok
+   snap-update-ns.postman
+   snap-update-ns.prompting-client
+   snap-update-ns.slack
+   snap-update-ns.snap-store
+   snap-update-ns.snapd-desktop-integration
+   snap-update-ns.thunderbird
+   snap-update-ns.vlc
+   snap.chromium.chromedriver
+   snap.chromium.chromium
+   snap.chromium.daemon
+   snap.chromium.hook.configure
+   snap.core.hook.configure
+   snap.cups.accept
+   snap.cups.cancel
+   snap.cups.cups-browsed
+   snap.cups.cupsaccept
+   snap.cups.cupsctl
+   snap.cups.cupsd
+   snap.cups.cupsdisable
+   snap.cups.cupsenable
+   snap.cups.cupsfilter
+   snap.cups.cupsreject
+   snap.cups.cupstestppd
+   snap.cups.driverless
+   snap.cups.gs
+   snap.cups.ippeveprinter
+   snap.cups.ippfind
+   snap.cups.ipptool
+   snap.cups.lp
+   snap.cups.lpadmin
+   snap.cups.lpc
+   snap.cups.lpinfo
+   snap.cups.lpoptions
+   snap.cups.lpq
+   snap.cups.lpr
+   snap.cups.lprm
+   snap.cups.lpstat
+   snap.cups.reject
+   snap.desktop-security-center.desktop-security-center
+   snap.desktop-security-center.hook.configure
+   snap.firefox.firefox
+   snap.firefox.geckodriver
+   snap.firefox.hook.configure
+   snap.firefox.hook.disconnect-plug-host-hunspell
+   snap.firefox.hook.install
+   snap.firefox.hook.post-refresh
+   snap.firmware-updater.firmware-notifier
+   snap.firmware-updater.firmware-updater
+   snap.firmware-updater.firmware-updater-app
+   snap.firmware-updater.hook.configure
+   snap.mesa-2404.component-monitor
+   snap.mesa-2404.hook.connect-plug-kernel-gpu-2404
+   snap.mesa-2404.hook.disconnect-plug-kernel-gpu-2404
+   snap.mesa-2404.hook.install
+   snap.mesa-2404.hook.post-refresh
+   snap.ngrok.ngrok
+   snap.postman.hook.configure
+   snap.postman.postman
+   snap.prompting-client.daemon
+   snap.prompting-client.echo
+   snap.prompting-client.hook.configure
+   snap.prompting-client.logging-level
+   snap.prompting-client.scripted
+   snap.slack.hook.configure
+   snap.slack.slack
+   snap.snap-store.hook.configure
+   snap.snap-store.show-updates
+   snap.snap-store.snap-store
+   snap.snapd-desktop-integration.hook.configure
+   snap.snapd-desktop-integration.snapd-desktop-integration
+   snap.thunderbird.hook.configure
+   snap.thunderbird.hook.install
+   snap.thunderbird.hook.post-refresh
+   snap.thunderbird.thunderbird
+   snap.vlc.vlc
+   ssh-keyscan
+   staticd
+   swtpm
+   systemd-detect-virt
+   tcpdump
+   tinyproxy
+   tnftp
+   tnftp//cmds
+   tnftp//dash
+   tnftp//dash//more
+   transmission-cli
+   transmission-daemon
+   transmission-gtk
+   transmission-qt
+   tshark
+   tshark//dumpcap
+   ubuntu_pro_apt_news
+   ubuntu_pro_esm_cache
+   ubuntu_pro_esm_cache//apt_methods
+   ubuntu_pro_esm_cache//apt_methods_gpgv
+   ubuntu_pro_esm_cache//cloud_id
+   ubuntu_pro_esm_cache//dpkg
+   ubuntu_pro_esm_cache//ps
+   ubuntu_pro_esm_cache//ubuntu_distro_info
+   ubuntu_pro_esm_cache_systemctl
+   ubuntu_pro_esm_cache_systemd_detect_virt
+   unix-chkpwd
+   unpriv_bwrap
+   unprivileged_userns
+   virt-aa-helper
+   vrrpd
+   wg
+   wg-quick
+   wg-quick//ip
+   wg-quick//nft
+   wg-quick//sysctl
+   who
+   znc
+5 profiles are in complain mode.
+   /usr/sbin/sssd
+   Xorg
+   Xorg_wrap
+   libreoffice-oosplash
+   libreoffice-soffice
+0 profiles are in prompt mode.
+0 profiles are in kill mode.
+78 profiles are in unconfined mode.
+   1password
+   Discord
+   MongoDB Compass
+   QtWebEngineProcess
+   balena-etcher
+   brave
+   buildah
+   busybox
+   cam
+   ch-checkns
+   ch-run
+   chrome
+   chromium
+   crun
+   desktop-icons-ng
+   devhelp
+   element-desktop
+   epiphany
+   evolution
+   firefox
+   flatpak
+   foliate
+   geary
+   github-desktop
+   goldendict
+   kchmviewer
+   keybase
+   lc-compliance
+   libcamerify
+   linux-sandbox
+   loupe
+   lxc-attach
+   lxc-create
+   lxc-destroy
+   lxc-execute
+   lxc-stop
+   lxc-unshare
+   lxc-usernsexec
+   mmdebstrap
+   msedge
+   nautilus
+   notepadqq
+   obsidian
+   opam
+   opera
+   pageedit
+   podman
+   polypane
+   privacybrowser
+   qcam
+   qmapshack
+   qutebrowser
+   rootlesskit
+   rpm
+   rssguard
+   runc
+   scide
+   signal-desktop
+   slack
+   slirp4netns
+   steam
+   stress-ng
+   surfshark
+   systemd-coredump
+   thunderbird
+   toybox
+   trinity
+   tup
+   tuxedo-control-center
+   userbindmount
+   uwsgi-core
+   vdens
+   virtiofsd
+   vivaldi-bin
+   vpnns
+   vscode
+   wike
+   wpcom
+60 processes have profiles defined.
+21 processes are in enforce mode.
+   /usr/bin/python3.13 (43748) /usr/bin/wsdd
+   /usr/sbin/clamd (2282) 
+   /usr/sbin/cups-browsed (20116) 
+   /usr/sbin/cupsd (20113) 
+   /usr/lib/cups/notifier/dbus (20114) /usr/sbin/cupsd
+   /usr/lib/cups/notifier/dbus (20115) /usr/sbin/cupsd
+   /usr/bin/bwrap (5018) bwrap
+   /usr/bin/bwrap (5042) bwrap
+   /usr/libexec/glycin-loaders/2+/glycin-image-rs (5076) bwrap//&unpriv_bwrap
+   /usr/bin/mongod (3727) docker-default
+   /usr/bin/fusermount3 (4613) fusermount3
+   /usr/sbin/libvirtd (3042) libvirtd
+   /usr/sbin/rsyslogd (2372) rsyslogd
+   /usr/bin/dash (2837) snap.cups.cups-browsed
+   /usr/bin/dash (2997) snap.cups.cups-browsed
+   /usr/lib/cargo/bin/coreutils/sleep (2998) snap.cups.cups-browsed
+   /usr/bin/dash (2839) snap.cups.cupsd
+   /snap/cups/1146/sbin/cupsd (2993) snap.cups.cupsd
+   /snap/cups/1146/sbin/cups-proxyd (2994) snap.cups.cupsd
+   /snap/snapd-desktop-integration/343/usr/bin/snapd-desktop-integration (5506) snap.snapd-desktop-integration.snapd-desktop-integration
+   /snap/snapd-desktop-integration/343/usr/bin/snapd-desktop-integration (5641) snap.snapd-desktop-integration.snapd-desktop-integration
+0 processes are in complain mode.
+0 processes are in prompt mode.
+0 processes are in kill mode.
+39 processes are unconfined but have a profile defined.
+   /opt/brave.com/brave/brave (5815) brave
+   /opt/brave.com/brave/chrome_crashpad_handler (5817) brave
+   /opt/brave.com/brave/chrome_crashpad_handler (5819) brave
+   /opt/brave.com/brave/brave (5825) brave
+   /opt/brave.com/brave/brave (5826) brave
+   /opt/brave.com/brave/brave (5828) brave
+   /opt/brave.com/brave/brave (5856) brave
+   /opt/brave.com/brave/brave (5863) brave
+   /opt/brave.com/brave/brave (5886) brave
+   /opt/brave.com/brave/brave (5946) brave
+   /opt/brave.com/brave/brave (6155) brave
+   /opt/brave.com/brave/brave (6202) brave
+   /opt/brave.com/brave/brave (6304) brave
+   /opt/brave.com/brave/brave (6428) brave
+   /opt/brave.com/brave/brave (6444) brave
+   /opt/brave.com/brave/brave (6522) brave
+   /opt/brave.com/brave/brave (6601) brave
+   /opt/brave.com/brave/brave (6688) brave
+   /opt/brave.com/brave/brave (6946) brave
+   /opt/brave.com/brave/brave (10594) brave
+   /opt/brave.com/brave/brave (25933) brave
+   /opt/brave.com/brave/brave (26291) brave
+   /opt/brave.com/brave/brave (32807) brave
+   /opt/brave.com/brave/brave (42264) brave
+   /opt/brave.com/brave/brave (43470) brave
+   /opt/brave.com/brave/brave (44211) brave
+   /opt/google/chrome/chrome (18523) chrome
+   /opt/google/chrome/chrome_crashpad_handler (18531) chrome
+   /opt/google/chrome/chrome_crashpad_handler (18533) chrome
+   /opt/google/chrome/chrome (18539) chrome
+   /opt/google/chrome/chrome (18540) chrome
+   /opt/google/chrome/chrome (18542) chrome
+   /opt/google/chrome/chrome (18573) chrome
+   /opt/google/chrome/chrome (18574) chrome
+   /opt/google/chrome/chrome (18599) chrome
+   /opt/google/chrome/chrome (18898) chrome
+   /opt/google/chrome/chrome (18916) chrome
+   /opt/google/chrome/chrome (19134) chrome
+   /usr/bin/gjs-console (5541) desktop-icons-ng
+0 processes are in mixed mode.
+p.ngrok.ngrok
+   snap.postman.hook.configure
+   snap.postman.postman
+   snap.prompting-client.daemon
+   snap.prompting-client.echo
+   snap.prompting-client.hook.configure
+   snap.prompting-client.logging-level
+   snap.prompting-client.scripted
+   snap.slack.hook.configure
+   snap.slack.slack
+   snap.snap-store.hook.configure
+   snap.snap-store.show-updates
+   snap.snap-store.snap-store
+   snap.snapd-desktop-integration.hook.configure
+   snap.snapd-desktop-integration.snapd-desktop-integration
+   snap.thunderbird.hook.configure
+   snap.thunderbird.hook.install
+   snap.thunderbird.hook.post-refresh
+   snap.thunderbird.thunderbird
+   snap.vlc.vlc
+   ssh-keyscan
+   staticd
+   swtpm
+   systemd-detect-virt
+   tcpdump
+   tinyproxy
+   tnftp
+   tnftp//cmds
+   tnftp//dash
+   tnftp//dash//more
+   transmission-cli
+   transmission-daemon
+   transmission-gtk
+   transmission-qt
+   tshark
+   tshark//dumpcap
+   ubuntu_pro_apt_news
+   ubuntu_pro_esm_cache
+   ubuntu_pro_esm_cache//apt_methods
+   ubuntu_pro_esm_cache//apt_methods_gpgv
+   ubuntu_pro_esm_cache//cloud_id
+   ubuntu_pro_esm_cache//dpkg
+   ubuntu_pro_esm_cache//ps
+   ubuntu_pro_esm_cache//ubuntu_distro_info
+   ubuntu_pro_esm_cache_systemctl
+   ubuntu_pro_esm_cache_systemd_detect_virt
+   unix-chkpwd
+   unpriv_bwrap
+   unprivileged_userns
+   virt-aa-helper
+   vrrpd
+   wg
+   wg-quick
+   wg-quick//ip
+   wg-quick//nft
+   wg-quick//sysctl
+   who
+   znc
+5 profiles are in complain mode.
+   /usr/sbin/sssd
+   Xorg
+   Xorg_wrap
+   libreoffice-oosplash
+   libreoffice-soffice
+0 profiles are in prompt mode.
+0 profiles are in kill mode.
+78 profiles are in unconfined mode.
+   1password
+   Discord
+   MongoDB Compass
+   QtWebEngineProcess
+   balena-etcher
+   brave
+   buildah
+   busybox
+   cam
+   ch-checkns
+   ch-run
+   chrome
+   chromium
+   crun
+   desktop-icons-ng
+   devhelp
+   element-desktop
+   epiphany
+   evolution
+   firefox
+   flatpak
+   foliate
+   geary
+   github-desktop
+   goldendict
+   kchmviewer
+   keybase
+   lc-compliance
+   libcamerify
+   linux-sandbox
+   loupe
+   lxc-attach
+   lxc-create
+   lxc-destroy
+   lxc-execute
+   lxc-stop
+   lxc-unshare
+   lxc-usernsexec
+   mmdebstrap
+   msedge
+   nautilus
+   notepadqq
+   obsidian
+   opam
+   opera
+   pageedit
+   podman
+   polypane
+   privacybrowser
+   qcam
+   qmapshack
+   qutebrowser
+   rootlesskit
+   rpm
+   rssguard
+   runc
+   scide
+   signal-desktop
+   slack
+   slirp4netns
+   steam
+   stress-ng
+   surfshark
+   systemd-coredump
+   thunderbird
+   toybox
+   trinity
+   tup
+   tuxedo-control-center
+   userbindmount
+   uwsgi-core
+   vdens
+   virtiofsd
+   vivaldi-bin
+   vpnns
+   vscode
+   wike
+   wpcom
+60 processes have profiles defined.
+21 processes are in enforce mode.
+   /usr/bin/python3.13 (43748) /usr/bin/wsdd
+   /usr/sbin/clamd (2282) 
+   /usr/sbin/cups-browsed (20116) 
+   /usr/sbin/cupsd (20113) 
+   /usr/lib/cups/notifier/dbus (20114) /usr/sbin/cupsd
+   /usr/lib/cups/notifier/dbus (20115) /usr/sbin/cupsd
+   /usr/bin/bwrap (5018) bwrap
+   /usr/bin/bwrap (5042) bwrap
+   /usr/libexec/glycin-loaders/2+/glycin-image-rs (5076) bwrap//&unpriv_bwrap
+   /usr/bin/mongod (3727) docker-default
+   /usr/bin/fusermount3 (4613) fusermount3
+   /usr/sbin/libvirtd (3042) libvirtd
+   /usr/sbin/rsyslogd (2372) rsyslogd
+   /usr/bin/dash (2837) snap.cups.cups-browsed
+   /usr/bin/dash (2997) snap.cups.cups-browsed
+   /usr/lib/cargo/bin/coreutils/sleep (2998) snap.cups.cups-browsed
+   /usr/bin/dash (2839) snap.cups.cupsd
+   /snap/cups/1146/sbin/cupsd (2993) snap.cups.cupsd
+   /snap/cups/1146/sbin/cups-proxyd (2994) snap.cups.cupsd
+   /snap/snapd-desktop-integration/343/usr/bin/snapd-desktop-integration (5506) snap.snapd-desktop-integration.snapd-desktop-integration
+   /snap/snapd-desktop-integration/343/usr/bin/snapd-desktop-integration (5641) snap.snapd-desktop-integration.snapd-desktop-integration
+0 processes are in complain mode.
+0 processes are in prompt mode.
+0 processes are in kill mode.
+39 processes are unconfined but have a profile defined.
+   /opt/brave.com/brave/brave (5815) brave
+   /opt/brave.com/brave/chrome_crashpad_handler (5817) brave
+   /opt/brave.com/brave/chrome_crashpad_handler (5819) brave
+   /opt/brave.com/brave/brave (5825) brave
+   /opt/brave.com/brave/brave (5826) brave
+   /opt/brave.com/brave/brave (5828) brave
+   /opt/brave.com/brave/brave (5856) brave
+   /opt/brave.com/brave/brave (5863) brave
+   /opt/brave.com/brave/brave (5886) brave
+   /opt/brave.com/brave/brave (5946) brave
+   /opt/brave.com/brave/brave (6155) brave
+   /opt/brave.com/brave/brave (6202) brave
+   /opt/brave.com/brave/brave (6304) brave
+   /opt/brave.com/brave/brave (6428) brave
+   /opt/brave.com/brave/brave (6444) brave
+   /opt/brave.com/brave/brave (6522) brave
+   /opt/brave.com/brave/brave (6601) brave
+   /opt/brave.com/brave/brave (6688) brave
+   /opt/brave.com/brave/brave (6946) brave
+   /opt/brave.com/brave/brave (10594) brave
+   /opt/brave.com/brave/brave (25933) brave
+   /opt/brave.com/brave/brave (26291) brave
+   /opt/brave.com/brave/brave (32807) brave
+   /opt/brave.com/brave/brave (42264) brave
+   /opt/brave.com/brave/brave (43470) brave
+   /opt/brave.com/brave/brave (44211) brave
+   /opt/google/chrome/chrome (18523) chrome
+   /opt/google/chrome/chrome_crashpad_handler (18531) chrome
+   /opt/google/chrome/chrome_crashpad_handler (18533) chrome
+   /opt/google/chrome/chrome (18539) chrome
+   /opt/google/chrome/chrome (18540) chrome
+   /opt/google/chrome/chrome (18542) chrome
+   /opt/google/chrome/chrome (18573) chrome
+   /opt/google/chrome/chrome (18574) chrome
+   /opt/google/chrome/chrome (18599) chrome
+   /opt/google/chrome/chrome (18898) chrome
+   /opt/google/chrome/chrome (18916) chrome
+   /opt/google/chrome/chrome (19134) chrome
+   /usr/bin/gjs-console (5541) desktop-icons-ng
+0 processes are in mixed mode.
+[🔍] Rodando auditoria com Lynis...
+[🧹] Limpando logs antigos com mais de 7 dias...
+[🧹] Limpando arquivos e pastas antigos da pasta Downloads...
+===== Atualização concluída com sucesso em 2026-02-18 10:01:44 =====
