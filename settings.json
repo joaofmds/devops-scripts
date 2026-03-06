@@ -1,0 +1,91 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always",
+        "source.fixAll": "always"
+    },
+    "eslint.validate": ["javascript", "javascriptreact"],
+    "workbench.startupEditor": "none",
+    "explorer.compactFolders": false,
+    "code-runner.runInTerminal": true,
+    "code-runner.clearPreviousOutput": false,
+    "code-runner.executorMap": {
+        "python": "clear ; python3 -u",
+        "javascript": "clear ; node",
+    },
+    "code-runner.ignoreSelection": true,
+    "workbench.iconTheme": "material-icon-theme",
+    "python.defaultInterpreterPath": "/bin/python3",
+    "[python]": {
+        "editor.formatOnType": true
+    },
+    "explorer.confirmDragAndDrop": false,
+    "security.workspace.trust.untrustedFiles": "open",
+    "terminal.integrated.enableMultiLinePasteWarning": "never",
+    "explorer.confirmDelete": false,
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "editor.tabSize": 2,
+    "workbench.editorAssociations": {
+        "*.out": "default"
+    },
+    "[dockercompose]": {
+        "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+    },
+    "files.watcherExclude": {
+        "**/.bloop": true,
+        "**/.metals": true,
+        "**/.ammonite": true
+    },
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "window.zoomLevel": 0,
+    "vs-kubernetes": {
+        "vscode-kubernetes.minikube-path-linux": "/home/joaome/.local/state/vs-kubernetes/tools/minikube/linux-amd64/minikube",
+        "vs-kubernetes.minikube-show-information-expiration": "2025-08-10T14:21:16.493Z"
+    },
+    "workbench.settings.openDefaultKeybindings": true,
+    "editor.fontSize": 12,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "sonarlint.pathToNodeExecutable": "/home/joaome/.nvm/versions/node/v21.6.2/bin/node",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "git.enableSmartCommit": true,
+    "git.autofetch": true,
+    "sonarlint.connectedMode.connections.sonarqube": [],
+    "sonarlint.connectedMode.connections.sonarcloud": [
+        {
+            "organizationKey": "gboticario",
+            "connectionId": "gboticario"
+        }
+    ],
+    "sonarlint.rules": {
+        "typescript:S4138": {
+            "level": "on"
+        },
+        "typescript:S6544": {
+            "level": "off"
+        },
+        "typescript:S101": {
+            "level": "off"
+        }
+    },
+    "diffEditor.ignoreTrimWhitespace": false,
+    "docker.extension.enableComposeLanguageServer": false,
+    "workbench.colorTheme": "Catppuccin Mocha",
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "github.copilot.enable": {
+        "*": false,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "gitlens.ai.model": "vscode",
+    "gitlens.ai.vscode.model": "copilot:gpt-4.1"
+}
