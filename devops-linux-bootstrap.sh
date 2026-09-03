@@ -1,547 +1,386 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-# ============================================
-# DevOps Ubuntu Bootstrap (Zsh + Neovim + K8s)
-# ============================================
+# Idempotent DevOps workstation bootstrap for Ubuntu (native or WSL).
 
-# --------- CLI flags ----------
+readonly SCRIPT_NAME="${0##*/}"
+readonly LOCAL_BIN="${HOME}/.local/bin"
+readonly BLOCK_BEGIN="# >>> devops-linux-bootstrap >>>"
+readonly BLOCK_END="# <<< devops-linux-bootstrap <<<"
+export PATH="${LOCAL_BIN}:${PATH}"
+
 DO_UPGRADE=false
+INSTALL_SHELL=true
 INSTALL_NEOVIM=true
-INSTALL_K8S_TOOLS=true
-INSTALL_DEVOPS_TOOLS=true
+INSTALL_DOCKER=true
+INSTALL_IAC=true
+INSTALL_K8S=true
+INSTALL_SECURITY=true
+CLOUD=none
 
-for arg in "${@:-}"; do
-  case "$arg" in
-    --upgrade) DO_UPGRADE=true ;;
-    --no-neovim) INSTALL_NEOVIM=false ;;
-    --no-k8s) INSTALL_K8S_TOOLS=false ;;
-    --no-devops) INSTALL_DEVOPS_TOOLS=false ;;
-    -h|--help)
-      cat <<'EOF'
-Usage: bash devops-ubuntu-setup.sh [options]
+usage() {
+  cat <<EOF
+Usage: ${SCRIPT_NAME} [options]
 
 Options:
-  --upgrade        Runs apt upgrade/dist-upgrade (recommended on fresh install)
-  --no-neovim      Skips Neovim + kickstart.nvim setup
-  --no-k8s         Skips Kubernetes tools (kubectl/helm/k9s/kubectx/krew)
-  --no-devops      Skips general DevOps tools (jq/yq/fzf/rg/bat/eza/direnv/etc)
+  --upgrade                    Upgrade installed APT packages
+  --cloud <none|aws|azure|gcp> Install one cloud CLI (default: none)
+  --no-shell                   Skip Zsh and its plugins
+  --no-neovim                 Skip Neovim and kickstart.nvim
+  --no-docker                 Skip Docker Engine and Compose
+  --no-iac                    Skip Terraform, Ansible and IaC linters
+  --no-k8s                    Skip Kubernetes tools
+  --no-security               Skip security tools
+  -h, --help                   Show this help
+
+Examples:
+  ./${SCRIPT_NAME} --cloud aws
+  ./${SCRIPT_NAME} --upgrade --cloud azure --no-neovim
 EOF
-      exit 0
-      ;;
+}
+
+while (($#)); do
+  case "$1" in
+    --upgrade) DO_UPGRADE=true ;;
+    --cloud)
+      (($# >= 2)) || { echo "--cloud requires a value" >&2; exit 2; }
+      CLOUD=$2; shift ;;
+    --no-shell) INSTALL_SHELL=false ;;
+    --no-neovim) INSTALL_NEOVIM=false ;;
+    --no-docker) INSTALL_DOCKER=false ;;
+    --no-iac) INSTALL_IAC=false ;;
+    --no-k8s) INSTALL_K8S=false ;;
+    --no-security) INSTALL_SECURITY=false ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
+  shift
 done
 
-# --------- pretty output ----------
-if command -v tput >/dev/null 2>&1; then
+case "$CLOUD" in none|aws|azure|gcp) ;; *) echo "Invalid cloud: $CLOUD" >&2; exit 2 ;; esac
+
+if command -v tput >/dev/null 2>&1 && [[ -t 1 ]]; then
   BOLD="$(tput bold || true)"; RESET="$(tput sgr0 || true)"
-  RED="$(tput setaf 1 || true)"; GRN="$(tput setaf 2 || true)"; YLW="$(tput setaf 3 || true)"; BLU="$(tput setaf 4 || true)"
+  RED="$(tput setaf 1 || true)"; GREEN="$(tput setaf 2 || true)"
+  YELLOW="$(tput setaf 3 || true)"; BLUE="$(tput setaf 4 || true)"
 else
-  BOLD=""; RESET=""; RED=""; GRN=""; YLW=""; BLU=""
+  BOLD=""; RESET=""; RED=""; GREEN=""; YELLOW=""; BLUE=""
 fi
 
-log()  { echo "${BLU}${BOLD}==>${RESET} $*"; }
-ok()   { echo "${GRN}${BOLD}✔${RESET} $*"; }
-warn() { echo "${YLW}${BOLD}⚠${RESET} $*"; }
-die()  { echo "${RED}${BOLD}✖${RESET} $*" >&2; exit 1; }
+log()  { printf '%s==>%s %s\n' "${BLUE}${BOLD}" "$RESET" "$*"; }
+ok()   { printf '%sOK%s  %s\n' "${GREEN}${BOLD}" "$RESET" "$*"; }
+warn() { printf '%sWARN%s %s\n' "${YELLOW}${BOLD}" "$RESET" "$*" >&2; }
+die()  { printf '%sERROR%s %s\n' "${RED}${BOLD}" "$RESET" "$*" >&2; exit 1; }
+on_error() { local ec=$?; printf '%sERROR%s line %s (exit %s): %s\n' "${RED}${BOLD}" "$RESET" "$1" "$ec" "$2" >&2; exit "$ec"; }
+trap 'on_error "$LINENO" "$BASH_COMMAND"' ERR
 
-# --------- basics ----------
-require_cmd() { command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"; }
+has() { command -v "$1" >/dev/null 2>&1; }
+is_wsl() { [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; }
 
-is_ubuntu() {
-  [[ -r /etc/os-release ]] || return 1
-  # shellcheck disable=SC1091
-  . /etc/os-release
-  [[ "${ID:-}" == "ubuntu" || "${ID_LIKE:-}" == *"ubuntu"* ]]
+[[ -r /etc/os-release ]] || die "Cannot identify the operating system"
+# shellcheck disable=SC1091
+. /etc/os-release
+[[ "${ID:-}" == ubuntu ]] || die "Supported system: Ubuntu; detected: ${PRETTY_NAME:-unknown}"
+
+if ((EUID == 0)); then SUDO=(); else has sudo || die "sudo is required"; SUDO=(sudo); fi
+case "$(dpkg --print-architecture)" in
+  amd64)
+    readonly DEB_ARCH=amd64 GO_ARCH=amd64 GNU_ARCH=x86_64
+    readonly GITLEAKS_ARCH=x64
+    ;;
+  arm64)
+    readonly DEB_ARCH=arm64 GO_ARCH=arm64 GNU_ARCH=aarch64
+    readonly GITLEAKS_ARCH=arm64
+    ;;
+  *) die "Unsupported architecture: $(dpkg --print-architecture)" ;;
+esac
+
+APT_UPDATED=false
+apt_update() {
+  $APT_UPDATED && return
+  log "Updating APT package indexes"
+  "${SUDO[@]}" apt-get update
+  APT_UPDATED=true
 }
 
-SUDO="sudo"
-if [[ $EUID -eq 0 ]]; then
-  SUDO=""
-fi
-
-USER_HOME="${HOME}"
-USER_NAME="$(id -un)"
-ARCH="$(dpkg --print-architecture 2>/dev/null || uname -m)"
-
-# --------- github latest release helper ----------
-# Usage: gh_latest "derailed/k9s" "Linux_amd64.tar.gz"
-gh_latest_url() {
-  local repo="$1"
-  local pattern="$2"
-  require_cmd curl
-  require_cmd grep
-  require_cmd sed
-
-  # GitHub API: latest release assets
-  # We avoid jq dependency here (jq is installed later).
-  local api="https://api.github.com/repos/${repo}/releases/latest"
-  local url
-  url="$(
-    curl -fsSL "$api" \
-      | grep -Eo '"browser_download_url":[ ]*"[^"]+"' \
-      | sed -E 's/"browser_download_url":[ ]*"([^"]+)"/\1/' \
-      | grep -E "$pattern" \
-      | head -n 1
-  )"
-  [[ -n "${url:-}" ]] || die "Could not find latest asset for ${repo} matching pattern: ${pattern}"
-  echo "$url"
-}
-
-download_to() {
-  local url="$1"
-  local dest="$2"
-  mkdir -p "$(dirname "$dest")"
-  curl -fsSL "$url" -o "$dest"
-}
-
-ensure_line_in_file() {
-  local line="$1"
-  local file="$2"
-  mkdir -p "$(dirname "$file")"
-  touch "$file"
-  grep -qxF "$line" "$file" || echo "$line" >> "$file"
-}
-
-# --------- APT ----------
 apt_install() {
-  local pkgs=("$@")
-  log "Installing packages: ${pkgs[*]}"
-  $SUDO apt-get install -y "${pkgs[@]}"
-}
-
-apt_update_upgrade() {
-  log "Updating apt indexes"
-  $SUDO apt-get update -y
-  if $DO_UPGRADE; then
-    log "Upgrading system packages (this can take a while)"
-    $SUDO apt-get upgrade -y
-    $SUDO apt-get dist-upgrade -y || true
-  fi
-}
-
-# --------- main ----------
-main() {
-  is_ubuntu || warn "This script was designed for Ubuntu. Continuing anyway..."
-  require_cmd bash
-
-  log "Bootstrapping DevOps environment for user: ${USER_NAME}"
-  log "Arch: ${ARCH}"
-
-  apt_update_upgrade
-
-  # Core dependencies
-  apt_install \
-    ca-certificates curl wget git unzip tar gzip xz-utils \
-    build-essential software-properties-common \
-    gnupg lsb-release \
-    python3 python3-pip \
-    make \
-    net-tools iproute2 dnsutils traceroute \
-    openssh-client \
-    jq
-
-  if $INSTALL_DEVOPS_TOOLS; then
-    install_devops_tooling
-  fi
-
-  install_zsh_ohmyzsh
-
-  if $INSTALL_NEOVIM; then
-    install_neovim_kickstart
-  fi
-
-  if $INSTALL_K8S_TOOLS; then
-    install_k8s_tooling
-  fi
-
-  post_shell_notes
-
-  ok "Done."
-}
-
-install_devops_tooling() {
-  log "Installing general DevOps CLI utilities"
-
-  # eza is often better than exa; bat is cat with wings
-  apt_install \
-    fzf ripgrep bat \
-    direnv \
-    tree \
-    htop \
-    tmux \
-    vim \
-    silversearcher-ag \
-    universal-ctags
-
-  # eza package name can vary; try eza first, fallback to exa
-  if ! dpkg -s eza >/dev/null 2>&1; then
-    if $SUDO apt-get install -y eza >/dev/null 2>&1; then
-      ok "Installed eza"
-    else
-      warn "Could not install eza via apt; trying exa"
-      $SUDO apt-get install -y exa || warn "exa also unavailable; skipping"
-    fi
-  fi
-
-  # yq (mikefarah) – prefer latest release binary
-  install_yq_latest
-}
-
-install_yq_latest() {
-  log "Installing yq (mikefarah) latest"
-  local os="linux"
-  local arch
-  case "$ARCH" in
-    amd64) arch="amd64" ;;
-    arm64) arch="arm64" ;;
-    *) warn "Unsupported arch for yq binary (${ARCH}), trying apt"; $SUDO apt-get install -y yq || true; return ;;
-  esac
-
-  local url
-  url="$(gh_latest_url "mikefarah/yq" "/yq_${os}_${arch}\$")"
-  local dest="/usr/local/bin/yq"
-  $SUDO curl -fsSL "$url" -o "$dest"
-  $SUDO chmod +x "$dest"
-  ok "yq installed: $(yq --version || true)"
-}
-
-install_zsh_ohmyzsh() {
-  log "Installing Zsh + Oh My Zsh + Powerlevel10k + plugins"
-
-  apt_install zsh
-
-  # Oh My Zsh (unattended)
-  if [[ ! -d "${USER_HOME}/.oh-my-zsh" ]]; then
-    log "Installing Oh My Zsh (unattended)"
-    RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-      sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-  else
-    ok "Oh My Zsh already installed"
-  fi
-
-  local ZSH_CUSTOM="${ZSH_CUSTOM:-${USER_HOME}/.oh-my-zsh/custom}"
-
-  # Powerlevel10k theme
-  if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]]; then
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
-  else
-    ok "powerlevel10k already present"
-  fi
-
-  # Plugins
-  clone_or_update() {
-    local repo="$1"
-    local dest="$2"
-    if [[ -d "$dest/.git" ]]; then
-      (cd "$dest" && git pull --rebase --autostash) || true
-    else
-      git clone --depth=1 "$repo" "$dest"
-    fi
-  }
-
-  clone_or_update https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
-  clone_or_update https://github.com/zsh-users/zsh-syntax-highlighting "${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting"
-  clone_or_update https://github.com/Aloxaf/fzf-tab "${ZSH_CUSTOM}/plugins/fzf-tab"
-
-  # Nerd Font (Meslo) for p10k (same recommended by p10k docs)
-  install_meslo_nerd_font
-
-  # Configure .zshrc
-  local zshrc="${USER_HOME}/.zshrc"
-  touch "$zshrc"
-
-  # Set theme
-  if grep -q '^ZSH_THEME=' "$zshrc"; then
-    sed -i 's|^ZSH_THEME=.*|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$zshrc"
-  else
-    echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> "$zshrc"
-  fi
-
-  # Set plugins (merge-safe: replace existing plugins line)
-  if grep -q '^plugins=' "$zshrc"; then
-    sed -i 's|^plugins=.*|plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)|' "$zshrc"
-  else
-    echo 'plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)' >> "$zshrc"
-  fi
-
-  # Sensible defaults
-  ensure_line_in_file 'export EDITOR=nvim' "$zshrc"
-  ensure_line_in_file 'export VISUAL=nvim' "$zshrc"
-  ensure_line_in_file 'export PAGER=less' "$zshrc"
-  ensure_line_in_file 'alias k=kubectl' "$zshrc"
-  ensure_line_in_file 'alias kgp="kubectl get pods"' "$zshrc"
-  ensure_line_in_file 'alias kgs="kubectl get svc"' "$zshrc"
-  ensure_line_in_file 'alias kgn="kubectl get nodes"' "$zshrc"
-  ensure_line_in_file 'alias tf=terraform' "$zshrc"
-  ensure_line_in_file 'eval "$(direnv hook zsh)"' "$zshrc"
-
-  # Set default shell (won't break if it fails on some environments)
-  if [[ "${SHELL:-}" != "/usr/bin/zsh" && "${SHELL:-}" != "/bin/zsh" ]]; then
-    log "Setting default shell to zsh (may ask for password)"
-    chsh -s "$(command -v zsh)" "$USER_NAME" || warn "Could not change shell automatically. Run: chsh -s $(command -v zsh)"
-  fi
-
-  ok "Zsh stack configured"
-}
-
-install_meslo_nerd_font() {
-  log "Installing Meslo Nerd Font (user-local)"
-  local font_dir="${USER_HOME}/.local/share/fonts"
-  mkdir -p "$font_dir"
-
-  # Only download if not present
-  local marker="${font_dir}/MesloLGS NF Regular.ttf"
-  if [[ -f "$marker" ]]; then
-    ok "Meslo Nerd Font already present"
-    return
-  fi
-
-  local base="https://github.com/romkatv/powerlevel10k-media/raw/master"
-  download_to "${base}/MesloLGS%20NF%20Regular.ttf" "${font_dir}/MesloLGS NF Regular.ttf"
-  download_to "${base}/MesloLGS%20NF%20Bold.ttf" "${font_dir}/MesloLGS NF Bold.ttf"
-  download_to "${base}/MesloLGS%20NF%20Italic.ttf" "${font_dir}/MesloLGS NF Italic.ttf"
-  download_to "${base}/MesloLGS%20NF%20Bold%20Italic.ttf" "${font_dir}/MesloLGS NF Bold Italic.ttf"
-
-  fc-cache -f "$font_dir" >/dev/null 2>&1 || true
-  ok "Fonts installed. You may need to select 'MesloLGS NF' in your terminal profile."
-}
-
-install_neovim_kickstart() {
-  log "Installing Neovim (AppImage latest) + kickstart.nvim config"
-
-  # Install Neovim AppImage latest
-  local arch
-  case "$ARCH" in
-    amd64) arch="x86_64" ;;
-    arm64) arch="aarch64" ;;
-    *) warn "Unsupported arch for Neovim AppImage (${ARCH}), installing from apt"; apt_install neovim; return ;;
-  esac
-
-  local url
-  url="$(gh_latest_url "neovim/neovim" "/nvim-linux-${arch}\.appimage$")"
-  local tmp="/tmp/nvim.appimage"
-  download_to "$url" "$tmp"
-  chmod +x "$tmp"
-  $SUDO mv "$tmp" /usr/local/bin/nvim
-
-  ok "Neovim installed: $(nvim --version | head -n 1 || true)"
-
-  # kickstart.nvim as baseline config
-  local nvim_dir="${USER_HOME}/.config/nvim"
-  if [[ ! -d "$nvim_dir" ]]; then
-    log "Cloning kickstart.nvim"
-    git clone --depth=1 https://github.com/nvim-lua/kickstart.nvim.git "$nvim_dir"
-  else
-    ok "Neovim config already exists at ~/.config/nvim (skipping kickstart clone)"
-  fi
-
-  # Useful extras: make vim point to nvim
-  if command -v update-alternatives >/dev/null 2>&1; then
-    $SUDO update-alternatives --install /usr/bin/vim vim /usr/local/bin/nvim 60 || true
-    $SUDO update-alternatives --install /usr/bin/vi vi /usr/local/bin/nvim 60 || true
-  fi
-
-  ok "Neovim configured (kickstart.nvim). First run: nvim (it will auto-install plugins)."
-}
-
-install_k8s_tooling() {
-  log "Installing Kubernetes tooling"
-
-  # kubectl from apt (snap is avoided)
-  # On Ubuntu, kubectl may be in apt repos; if not, install via official kubernetes repo quickly:
-  if ! command -v kubectl >/dev/null 2>&1; then
-    log "Installing kubectl via apt (fallback to official repo if needed)"
-    if ! $SUDO apt-get install -y kubectl >/dev/null 2>&1; then
-      log "Setting up Kubernetes apt repo"
-      $SUDO mkdir -p /etc/apt/keyrings
-      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | $SUDO gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | $SUDO tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
-      $SUDO apt-get update -y
-      $SUDO apt-get install -y kubectl
-    fi
-  else
-    ok "kubectl already installed"
-  fi
-
-  # Helm (official script)
-  if ! command -v helm >/dev/null 2>&1; then
-    log "Installing Helm"
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-  else
-    ok "helm already installed"
-  fi
-
-  # Kustomize (latest)
-  if ! command -v kustomize >/dev/null 2>&1; then
-    log "Installing kustomize latest"
-    local arch
-    case "$ARCH" in
-      amd64) arch="amd64" ;;
-      arm64) arch="arm64" ;;
-      *) warn "Unsupported arch for kustomize (${ARCH}), skipping"; arch="" ;;
-    esac
-    if [[ -n "$arch" ]]; then
-      local url
-      url="$(gh_latest_url "kubernetes-sigs/kustomize" "kustomize_v.*_linux_${arch}\.tar\.gz$")"
-      local tgz="/tmp/kustomize.tgz"
-      download_to "$url" "$tgz"
-      tar -xzf "$tgz" -C /tmp
-      $SUDO mv /tmp/kustomize /usr/local/bin/kustomize
-      $SUDO chmod +x /usr/local/bin/kustomize
-      rm -f "$tgz"
-      ok "kustomize installed"
-    fi
-  else
-    ok "kustomize already installed"
-  fi
-
-  # kubectx/kubens
-  install_kubectx_kubens
-
-  # k9s
-  install_k9s_latest
-
-  # krew + plugins
-  install_krew_and_plugins
-
-  ok "Kubernetes tooling installed"
-}
-
-install_kubectx_kubens() {
-  log "Installing kubectx/kubens"
-  if command -v kubectx >/dev/null 2>&1 && command -v kubens >/dev/null 2>&1; then
-    ok "kubectx/kubens already installed"
-    return
-  fi
-
-  # Prefer apt if available
-  if $SUDO apt-get install -y kubectx >/dev/null 2>&1; then
-    ok "kubectx installed via apt"
-    return
-  fi
-
-  # Fallback: git clone
-  local dir="${USER_HOME}/.local/share/kubectx"
-  mkdir -p "$(dirname "$dir")"
-  if [[ ! -d "$dir" ]]; then
-    git clone --depth=1 https://github.com/ahmetb/kubectx.git "$dir"
-  fi
-  mkdir -p "${USER_HOME}/.local/bin"
-  ln -sf "${dir}/kubectx" "${USER_HOME}/.local/bin/kubectx"
-  ln -sf "${dir}/kubens"  "${USER_HOME}/.local/bin/kubens"
-
-  ok "kubectx/kubens installed in ~/.local/bin"
-}
-
-install_k9s_latest() {
-  log "Installing k9s latest"
-  if command -v k9s >/dev/null 2>&1; then
-    ok "k9s already installed"
-    return
-  fi
-
-  local arch
-  case "$ARCH" in
-    amd64) arch="amd64" ;;
-    arm64) arch="arm64" ;;
-    *) warn "Unsupported arch for k9s (${ARCH}), skipping"; return ;;
-  esac
-
-  local url
-  url="$(gh_latest_url "derailed/k9s" "Linux_${arch}\.tar\.gz$")"
-  local tgz="/tmp/k9s.tgz"
-  download_to "$url" "$tgz"
-  tar -xzf "$tgz" -C /tmp k9s
-  $SUDO mv /tmp/k9s /usr/local/bin/k9s
-  $SUDO chmod +x /usr/local/bin/k9s
-  rm -f "$tgz"
-  ok "k9s installed"
-}
-
-install_krew_and_plugins() {
-  log "Installing krew (kubectl plugin manager) + curated plugins"
-
-  if ! command -v kubectl >/dev/null 2>&1; then
-    warn "kubectl not found; skipping krew"
-    return
-  fi
-
-  # Add ~/.local/bin early in PATH for this script run
-  export PATH="${USER_HOME}/.local/bin:${PATH}"
-
-  if ! kubectl krew version >/dev/null 2>&1; then
-    log "Installing krew"
-    local os="linux"
-    local arch
-    case "$ARCH" in
-      amd64) arch="amd64" ;;
-      arm64) arch="arm64" ;;
-      *) warn "Unsupported arch for krew (${ARCH}), skipping"; return ;;
-    esac
-
-    local tmpdir
-    tmpdir="$(mktemp -d)"
-    local url
-    url="$(gh_latest_url "kubernetes-sigs/krew" "krew-${os}_${arch}\.tar\.gz$")"
-    download_to "$url" "${tmpdir}/krew.tgz"
-    tar -xzf "${tmpdir}/krew.tgz" -C "$tmpdir"
-    "${tmpdir}/krew-${os}_${arch}" install krew
-    rm -rf "$tmpdir"
-  else
-    ok "krew already installed"
-  fi
-
-  # Persist krew PATH in zshrc
-  local zshrc="${USER_HOME}/.zshrc"
-  ensure_line_in_file 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' "$zshrc"
-  export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-
-  # Curated plugin set (safe + high utility)
-  # - ctx/ns: context & namespace switching
-  # - neat: clean manifests
-  # - whoami: see current auth
-  # - view-secret: decode secrets
-  # - sniff: troubleshooting (requires privileges)
-  # - tree: resource tree
-  # - access-matrix: RBAC quick view
-  local plugins=(
-    ctx
-    ns
-    neat
-    whoami
-    view-secret
-    tree
-    access-matrix
-  )
-
-  for p in "${plugins[@]}"; do
-    if kubectl krew list 2>/dev/null | grep -qx "$p"; then
-      ok "krew plugin already installed: $p"
-    else
-      kubectl krew install "$p" || warn "Failed to install krew plugin: $p"
-    fi
+  local missing=() package
+  for package in "$@"; do
+    dpkg-query -W -f='${db:Status-Abbrev}' "$package" 2>/dev/null | grep -q '^ii ' || missing+=("$package")
   done
+  ((${#missing[@]})) || return 0
+  apt_update
+  log "Installing APT packages: ${missing[*]}"
+  DEBIAN_FRONTEND=noninteractive "${SUDO[@]}" apt-get install -y --no-install-recommends "${missing[@]}"
 }
 
-post_shell_notes() {
-  cat <<EOF
+download() { curl --fail --silent --show-error --location --retry 3 --output "$2" "$1"; }
+install_binary() { "${SUDO[@]}" install -m 0755 "$1" "/usr/local/bin/$2"; }
 
-${BOLD}Next steps (recommended):${RESET}
+github_asset_url() {
+  curl --fail --silent --show-error --location --retry 3 \
+    -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$1/releases/latest" |
+    jq -er --arg pattern "$2" '.assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n1
+}
 
-1) ${BOLD}Set your terminal font${RESET} to: ${BOLD}MesloLGS NF${RESET}
-   - Needed for Powerlevel10k icons to render correctly.
+add_apt_key() {
+  local url=$1 keyring=$2 tmp
+  [[ -s "$keyring" ]] && return
+  tmp="$(mktemp)"; download "$url" "$tmp"
+  "${SUDO[@]}" mkdir -p "$(dirname "$keyring")"
+  "${SUDO[@]}" gpg --dearmor --yes --output "$keyring" "$tmp"
+  rm -f "$tmp"
+}
 
-2) ${BOLD}Open a new terminal${RESET} (or run: ${BOLD}zsh${RESET})
-   - Powerlevel10k will start its configuration wizard on first run.
+write_root_file() {
+  local destination=$1 content=$2 tmp
+  tmp="$(mktemp)"; printf '%s\n' "$content" > "$tmp"
+  if [[ ! -f "$destination" ]] || ! cmp -s "$tmp" "$destination"; then
+    "${SUDO[@]}" install -m 0644 "$tmp" "$destination"
+    APT_UPDATED=false
+  fi
+  rm -f "$tmp"
+}
 
-3) ${BOLD}Start Neovim${RESET}: ${BOLD}nvim${RESET}
-   - kickstart.nvim will auto-install plugins on first launch.
+install_archive_binary() {
+  local repository=$1 pattern=$2 binary=$3 format=$4 tmpdir archive
+  has "$binary" && { ok "$binary already installed"; return; }
+  log "Installing $binary"
+  tmpdir="$(mktemp -d)"; archive="$tmpdir/archive"
+  download "$(github_asset_url "$repository" "$pattern")" "$archive"
+  case "$format" in
+    tgz) tar -xzf "$archive" -C "$tmpdir" ;;
+    zip) unzip -q "$archive" -d "$tmpdir" ;;
+    *) die "Unknown archive type: $format" ;;
+  esac
+  [[ -f "$tmpdir/$binary" ]] || die "$binary not found in downloaded archive"
+  install_binary "$tmpdir/$binary" "$binary"
+  rm -rf "$tmpdir"
+}
 
-4) Ensure ~/.local/bin is in PATH (usually already is on Ubuntu).
-   If not, add to your shell profile.
+install_core() {
+  apt_install ca-certificates curl wget git openssh-client gnupg lsb-release \
+    unzip zip tar gzip xz-utils build-essential make shellcheck \
+    python3 python3-pip python3-venv pipx jq fzf ripgrep bat tree htop btop tmux \
+    direnv age dnsutils iproute2 net-tools traceroute netcat-openbsd nmap tcpdump \
+    lsof strace openssl fontconfig
+  mkdir -p "$LOCAL_BIN"
+  [[ ! -x /usr/bin/batcat || -e "$LOCAL_BIN/bat" ]] || ln -s /usr/bin/batcat "$LOCAL_BIN/bat"
+  install_yq
+  install_uv
+  has pre-commit || { log "Installing pre-commit with pipx"; pipx install pre-commit; }
+  has gh || apt_install gh
+  has glab || ! apt-cache show glab >/dev/null 2>&1 || apt_install glab
+}
 
+install_yq() {
+  has yq && { ok "yq already installed"; return; }
+  local tmp; tmp="$(mktemp)"; log "Installing yq"
+  download "$(github_asset_url mikefarah/yq "^yq_linux_${GO_ARCH}$")" "$tmp"
+  install_binary "$tmp" yq; rm -f "$tmp"
+}
+
+install_uv() {
+  has uv && { ok "uv already installed"; return; }
+  local tmpdir archive; tmpdir="$(mktemp -d)"; archive="$tmpdir/uv.tar.gz"; log "Installing uv"
+  download "$(github_asset_url astral-sh/uv "^uv-${GNU_ARCH}-unknown-linux-gnu\\.tar\\.gz$")" "$archive"
+  tar -xzf "$archive" -C "$tmpdir"
+  install -m 0755 "$tmpdir/uv-${GNU_ARCH}-unknown-linux-gnu/uv" "$LOCAL_BIN/uv"
+  install -m 0755 "$tmpdir/uv-${GNU_ARCH}-unknown-linux-gnu/uvx" "$LOCAL_BIN/uvx"
+  rm -rf "$tmpdir"
+}
+
+install_docker() {
+  if has docker && docker compose version >/dev/null 2>&1; then ok "Docker and Compose already installed"; else
+    log "Configuring the official Docker repository"
+    add_apt_key https://download.docker.com/linux/ubuntu/gpg /etc/apt/keyrings/docker.gpg
+    write_root_file /etc/apt/sources.list.d/docker.list \
+      "deb [arch=${DEB_ARCH} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable"
+    apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  fi
+  local user_name="${SUDO_USER:-$(id -un)}"
+  if [[ "$user_name" != root ]] && ! id -nG "$user_name" | tr ' ' '\n' | grep -qx docker; then
+    "${SUDO[@]}" usermod -aG docker "$user_name"
+    warn "Docker group membership takes effect after a new login"
+  fi
+}
+
+install_iac() {
+  if ! has terraform; then
+    log "Configuring the official HashiCorp repository"
+    add_apt_key https://apt.releases.hashicorp.com/gpg /etc/apt/keyrings/hashicorp.gpg
+    write_root_file /etc/apt/sources.list.d/hashicorp.list \
+      "deb [arch=${DEB_ARCH} signed-by=/etc/apt/keyrings/hashicorp.gpg] https://apt.releases.hashicorp.com ${VERSION_CODENAME} main"
+    apt_install terraform
+  else ok "Terraform already installed"; fi
+  apt_install ansible ansible-lint
+  install_archive_binary terraform-linters/tflint "^tflint_linux_${GO_ARCH}\\.zip$" tflint zip
+  install_archive_binary terraform-docs/terraform-docs "^terraform-docs-.*-linux-${GO_ARCH}\\.tar\\.gz$" terraform-docs tgz
+}
+
+install_kubectl() {
+  has kubectl && { ok "kubectl already installed"; return; }
+  local version tmp expected actual; log "Installing kubectl (verified SHA-256)"
+  version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"; tmp="$(mktemp)"
+  download "https://dl.k8s.io/release/${version}/bin/linux/${GO_ARCH}/kubectl" "$tmp"
+  expected="$(curl -fsSL "https://dl.k8s.io/release/${version}/bin/linux/${GO_ARCH}/kubectl.sha256")"
+  actual="$(sha256sum "$tmp" | awk '{print $1}')"
+  [[ "$actual" == "$expected" ]] || die "kubectl checksum mismatch"
+  install_binary "$tmp" kubectl; rm -f "$tmp"
+}
+
+install_helm() {
+  has helm && { ok "Helm already installed"; return; }
+  local version tmpdir archive expected actual; log "Installing Helm (verified SHA-256)"
+  version="$(curl -fsSL https://api.github.com/repos/helm/helm/releases/latest | jq -er .tag_name)"
+  tmpdir="$(mktemp -d)"; archive="$tmpdir/helm.tar.gz"
+  download "https://get.helm.sh/helm-${version}-linux-${GO_ARCH}.tar.gz" "$archive"
+  expected="$(curl -fsSL "https://get.helm.sh/helm-${version}-linux-${GO_ARCH}.tar.gz.sha256sum" | awk '{print $1}')"
+  actual="$(sha256sum "$archive" | awk '{print $1}')"
+  [[ "$actual" == "$expected" ]] || die "Helm checksum mismatch"
+  tar -xzf "$archive" -C "$tmpdir"; install_binary "$tmpdir/linux-${GO_ARCH}/helm" helm
+  rm -rf "$tmpdir"
+}
+
+install_kubernetes() {
+  install_kubectl; install_helm
+  install_archive_binary kubernetes-sigs/kustomize "^kustomize_v.*_linux_${GO_ARCH}\\.tar\\.gz$" kustomize tgz
+  install_archive_binary derailed/k9s "^k9s_Linux_${GO_ARCH}\\.tar\\.gz$" k9s tgz
+  apt_install kubectx
+}
+
+install_security() {
+  if ! has trivy; then
+    log "Configuring the official Trivy repository"
+    add_apt_key https://aquasecurity.github.io/trivy-repo/deb/public.key /etc/apt/keyrings/trivy.gpg
+    write_root_file /etc/apt/sources.list.d/trivy.list \
+      "deb [signed-by=/etc/apt/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main"
+    apt_install trivy
+  else ok "trivy already installed"; fi
+  install_archive_binary gitleaks/gitleaks "^gitleaks_.*_linux_${GITLEAKS_ARCH}\\.tar\\.gz$" gitleaks tgz
+  if ! has sops; then
+    local tmp; tmp="$(mktemp)"; log "Installing sops"
+    download "$(github_asset_url getsops/sops "^sops-v.*\\.linux\\.${GO_ARCH}$")" "$tmp"
+    install_binary "$tmp" sops; rm -f "$tmp"
+  else ok "sops already installed"; fi
+}
+
+install_cloud_cli() {
+  case "$CLOUD" in
+    none) ok "No cloud CLI selected (use --cloud aws|azure|gcp)" ;;
+    aws) install_aws ;;
+    azure)
+      if ! has az; then
+        add_apt_key https://packages.microsoft.com/keys/microsoft.asc /etc/apt/keyrings/microsoft.gpg
+        write_root_file /etc/apt/sources.list.d/azure-cli.list \
+          "deb [arch=${DEB_ARCH} signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ ${VERSION_CODENAME} main"
+        apt_install azure-cli
+      else ok "Azure CLI already installed"; fi ;;
+    gcp)
+      if ! has gcloud; then
+        add_apt_key https://packages.cloud.google.com/apt/doc/apt-key.gpg /etc/apt/keyrings/cloud.google.gpg
+        write_root_file /etc/apt/sources.list.d/google-cloud-sdk.list \
+          "deb [signed-by=/etc/apt/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main"
+        apt_install google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
+      else ok "Google Cloud CLI already installed"; fi ;;
+  esac
+}
+
+install_aws() {
+  has aws && { ok "AWS CLI already installed"; return; }
+  local aws_arch tmpdir archive; [[ "$DEB_ARCH" == amd64 ]] && aws_arch=x86_64 || aws_arch=aarch64
+  tmpdir="$(mktemp -d)"; archive="$tmpdir/aws.zip"; log "Installing AWS CLI v2"
+  download "https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}.zip" "$archive"
+  unzip -q "$archive" -d "$tmpdir"
+  "${SUDO[@]}" "$tmpdir/aws/install" --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+  rm -rf "$tmpdir"
+}
+
+clone_once() {
+  [[ -d "$2/.git" ]] && { ok "Already installed: $2"; return; }
+  [[ ! -e "$2" ]] || { warn "Preserving existing path: $2"; return; }
+  git clone --depth=1 "$1" "$2"
+}
+
+configure_zshrc() {
+  local zshrc="$HOME/.zshrc" tmp; touch "$zshrc"; tmp="$(mktemp)"
+  awk -v begin="$BLOCK_BEGIN" -v end="$BLOCK_END" '
+    $0 == begin { skip=1; next } $0 == end { skip=0; next } !skip { print }
+  ' "$zshrc" > "$tmp"
+  cat >> "$tmp" <<'EOF'
+# >>> devops-linux-bootstrap >>>
+export PATH="$HOME/.local/bin:$PATH"
+export EDITOR=nvim
+export VISUAL=nvim
+export PAGER=less
+ZSH_THEME="powerlevel10k/powerlevel10k"
+plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)
+command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+alias k=kubectl
+alias tf=terraform
+# <<< devops-linux-bootstrap <<<
 EOF
+  mv "$tmp" "$zshrc"
+}
+
+install_shell() {
+  apt_install zsh
+  if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+    log "Installing Oh My Zsh (unattended)"
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  fi
+  local custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+  clone_once https://github.com/romkatv/powerlevel10k.git "$custom/themes/powerlevel10k"
+  clone_once https://github.com/zsh-users/zsh-autosuggestions "$custom/plugins/zsh-autosuggestions"
+  clone_once https://github.com/zsh-users/zsh-syntax-highlighting "$custom/plugins/zsh-syntax-highlighting"
+  clone_once https://github.com/Aloxaf/fzf-tab "$custom/plugins/fzf-tab"
+  configure_zshrc
+  if is_wsl; then
+    warn "WSL detected: select zsh in the Windows Terminal profile if desired"
+  elif [[ "${SHELL:-}" != "$(command -v zsh)" ]]; then
+    chsh -s "$(command -v zsh)" "${SUDO_USER:-$(id -un)}" || warn "Run chsh manually"
+  fi
+}
+
+install_neovim() {
+  if ! has nvim; then
+    local tmp; tmp="$(mktemp)"; log "Installing Neovim AppImage"
+    download "$(github_asset_url neovim/neovim "^nvim-linux-${GNU_ARCH}\\.appimage$")" "$tmp"
+    install_binary "$tmp" nvim; rm -f "$tmp"
+  else ok "Neovim already installed"; fi
+  clone_once https://github.com/nvim-lua/kickstart.nvim.git "$HOME/.config/nvim"
+}
+
+show_summary() {
+  local commands=(git ssh curl jq yq rg fzf python3 uv pipx pre-commit shellcheck gh) missing=() item
+  $INSTALL_DOCKER && commands+=(docker)
+  $INSTALL_IAC && commands+=(terraform ansible tflint terraform-docs)
+  $INSTALL_K8S && commands+=(kubectl helm kustomize k9s kubectx kubens)
+  $INSTALL_SECURITY && commands+=(trivy gitleaks sops age)
+  [[ "$CLOUD" == aws ]] && commands+=(aws); [[ "$CLOUD" == azure ]] && commands+=(az); [[ "$CLOUD" == gcp ]] && commands+=(gcloud)
+  $INSTALL_NEOVIM && commands+=(nvim)
+  for item in "${commands[@]}"; do has "$item" || missing+=("$item"); done
+  ((${#missing[@]})) && warn "Not found in current PATH: ${missing[*]}" || ok "All selected tools are available"
+  is_wsl && warn "Docker on WSL requires systemd or Docker Desktop WSL integration"
+  printf '\nOpen a new terminal to apply PATH, shell and Docker-group changes.\n'
+}
+
+main() {
+  log "Ubuntu DevOps bootstrap ($(is_wsl && printf WSL || printf native), ${DEB_ARCH})"
+  apt_update
+  if $DO_UPGRADE; then
+    log "Upgrading installed packages"
+    DEBIAN_FRONTEND=noninteractive "${SUDO[@]}" apt-get upgrade -y
+  fi
+  install_core
+  $INSTALL_DOCKER && install_docker
+  $INSTALL_IAC && install_iac
+  $INSTALL_K8S && install_kubernetes
+  $INSTALL_SECURITY && install_security
+  install_cloud_cli
+  $INSTALL_SHELL && install_shell
+  $INSTALL_NEOVIM && install_neovim
+  show_summary
 }
 
 main "$@"
