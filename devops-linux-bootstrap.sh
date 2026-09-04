@@ -163,14 +163,27 @@ install_core() {
     unzip zip tar gzip xz-utils build-essential make shellcheck \
     python3 python3-pip python3-venv pipx jq fzf ripgrep bat tree htop btop tmux \
     direnv age dnsutils iproute2 net-tools traceroute netcat-openbsd nmap tcpdump \
-    lsof strace openssl fontconfig
+    lsof strace openssl fontconfig vim silversearcher-ag universal-ctags
   mkdir -p "$LOCAL_BIN"
   [[ ! -x /usr/bin/batcat || -e "$LOCAL_BIN/bat" ]] || ln -s /usr/bin/batcat "$LOCAL_BIN/bat"
+  install_eza
   install_yq
   install_uv
   has pre-commit || { log "Installing pre-commit with pipx"; pipx install pre-commit; }
   has gh || apt_install gh
   has glab || ! apt-cache show glab >/dev/null 2>&1 || apt_install glab
+}
+
+install_eza() {
+  has eza && { ok "eza already installed"; return; }
+  has exa && { ok "exa already installed"; return; }
+  if apt-cache show eza >/dev/null 2>&1; then
+    apt_install eza
+  elif apt-cache show exa >/dev/null 2>&1; then
+    apt_install exa
+  else
+    warn "eza/exa not available in APT"
+  fi
 }
 
 install_yq() {
@@ -242,11 +255,56 @@ install_helm() {
   rm -rf "$tmpdir"
 }
 
+install_kubectx_kubens() {
+  if has kubectx && has kubens; then
+    ok "kubectx/kubens already installed"
+    return
+  fi
+  if apt-cache show kubectx >/dev/null 2>&1; then
+    apt_install kubectx
+  fi
+  if has kubectx && has kubens; then
+    return
+  fi
+  local dir="$HOME/.local/share/kubectx"
+  clone_once https://github.com/ahmetb/kubectx.git "$dir"
+  mkdir -p "$LOCAL_BIN"
+  [[ -e "$LOCAL_BIN/kubectx" ]] || ln -sf "$dir/kubectx" "$LOCAL_BIN/kubectx"
+  [[ -e "$LOCAL_BIN/kubens" ]] || ln -sf "$dir/kubens" "$LOCAL_BIN/kubens"
+}
+
+install_krew_and_plugins() {
+  has kubectl || { warn "kubectl not found; skipping krew"; return; }
+  export PATH="${KREW_ROOT:-$HOME/.krew}/bin:${PATH}"
+  if ! kubectl krew version >/dev/null 2>&1; then
+    log "Installing krew"
+    local tmpdir archive
+    tmpdir="$(mktemp -d)"
+    archive="$tmpdir/krew.tar.gz"
+    download "$(github_asset_url kubernetes-sigs/krew "^krew-linux_${GO_ARCH}\\.tar\\.gz$")" "$archive"
+    tar -xzf "$archive" -C "$tmpdir"
+    "$tmpdir/krew-linux_${GO_ARCH}" install krew
+    rm -rf "$tmpdir"
+  else
+    ok "krew already installed"
+  fi
+  export PATH="${KREW_ROOT:-$HOME/.krew}/bin:${PATH}"
+  local plugin plugins=(ctx ns neat whoami view-secret tree access-matrix)
+  for plugin in "${plugins[@]}"; do
+    if kubectl krew list 2>/dev/null | grep -qx "$plugin"; then
+      ok "krew plugin already installed: $plugin"
+    else
+      kubectl krew install "$plugin" || warn "Failed to install krew plugin: $plugin"
+    fi
+  done
+}
+
 install_kubernetes() {
   install_kubectl; install_helm
   install_archive_binary kubernetes-sigs/kustomize "^kustomize_v.*_linux_${GO_ARCH}\\.tar\\.gz$" kustomize tgz
   install_archive_binary derailed/k9s "^k9s_Linux_${GO_ARCH}\\.tar\\.gz$" k9s tgz
-  apt_install kubectx
+  install_kubectx_kubens
+  install_krew_and_plugins
 }
 
 install_security() {
@@ -303,24 +361,67 @@ clone_once() {
 }
 
 configure_zshrc() {
-  local zshrc="$HOME/.zshrc" tmp; touch "$zshrc"; tmp="$(mktemp)"
+  local zshrc="$HOME/.zshrc" tmp omz
+  touch "$zshrc"
+  tmp="$(mktemp)"
   awk -v begin="$BLOCK_BEGIN" -v end="$BLOCK_END" '
     $0 == begin { skip=1; next } $0 == end { skip=0; next } !skip { print }
   ' "$zshrc" > "$tmp"
+  if ! grep -q 'oh-my-zsh.sh' "$tmp"; then
+    omz="$(mktemp)"
+    cat > "$omz" <<'EOF'
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="powerlevel10k/powerlevel10k"
+plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)
+source "$ZSH/oh-my-zsh.sh"
+
+EOF
+    cat "$tmp" >> "$omz"
+    mv "$omz" "$tmp"
+  else
+    if grep -q '^ZSH_THEME=' "$tmp"; then
+      sed -i 's|^ZSH_THEME=.*|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$tmp"
+    else
+      sed -i '/oh-my-zsh.sh/i ZSH_THEME="powerlevel10k/powerlevel10k"' "$tmp"
+    fi
+    if grep -q '^plugins=' "$tmp"; then
+      sed -i 's|^plugins=.*|plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)|' "$tmp"
+    else
+      sed -i '/oh-my-zsh.sh/i plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)' "$tmp"
+    fi
+  fi
   cat >> "$tmp" <<'EOF'
 # >>> devops-linux-bootstrap >>>
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export EDITOR=nvim
 export VISUAL=nvim
 export PAGER=less
-ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git sudo docker kubectl helm terraform aws fzf zsh-autosuggestions zsh-syntax-highlighting fzf-tab)
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 alias k=kubectl
+alias kgp='kubectl get pods'
+alias kgs='kubectl get svc'
+alias kgn='kubectl get nodes'
 alias tf=terraform
 # <<< devops-linux-bootstrap <<<
 EOF
   mv "$tmp" "$zshrc"
+}
+
+install_meslo_nerd_font() {
+  local font_dir="$HOME/.local/share/fonts"
+  local marker="${font_dir}/MesloLGS NF Regular.ttf"
+  local base="https://github.com/romkatv/powerlevel10k-media/raw/master"
+  mkdir -p "$font_dir"
+  if [[ -f "$marker" ]]; then
+    ok "Meslo Nerd Font already present"
+    return
+  fi
+  log "Installing Meslo Nerd Font"
+  download "${base}/MesloLGS%20NF%20Regular.ttf" "${font_dir}/MesloLGS NF Regular.ttf"
+  download "${base}/MesloLGS%20NF%20Bold.ttf" "${font_dir}/MesloLGS NF Bold.ttf"
+  download "${base}/MesloLGS%20NF%20Italic.ttf" "${font_dir}/MesloLGS NF Italic.ttf"
+  download "${base}/MesloLGS%20NF%20Bold%20Italic.ttf" "${font_dir}/MesloLGS NF Bold Italic.ttf"
+  fc-cache -f "$font_dir" >/dev/null 2>&1 || true
 }
 
 install_shell() {
@@ -328,12 +429,15 @@ install_shell() {
   if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     log "Installing Oh My Zsh (unattended)"
     RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  else
+    ok "Oh My Zsh already installed"
   fi
   local custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
   clone_once https://github.com/romkatv/powerlevel10k.git "$custom/themes/powerlevel10k"
   clone_once https://github.com/zsh-users/zsh-autosuggestions "$custom/plugins/zsh-autosuggestions"
   clone_once https://github.com/zsh-users/zsh-syntax-highlighting "$custom/plugins/zsh-syntax-highlighting"
   clone_once https://github.com/Aloxaf/fzf-tab "$custom/plugins/fzf-tab"
+  install_meslo_nerd_font
   configure_zshrc
   if is_wsl; then
     warn "WSL detected: select zsh in the Windows Terminal profile if desired"
@@ -349,20 +453,32 @@ install_neovim() {
     install_binary "$tmp" nvim; rm -f "$tmp"
   else ok "Neovim already installed"; fi
   clone_once https://github.com/nvim-lua/kickstart.nvim.git "$HOME/.config/nvim"
+  if has update-alternatives; then
+    local nvim_path
+    nvim_path="$(command -v nvim)"
+    "${SUDO[@]}" update-alternatives --install /usr/bin/vim vim "$nvim_path" 60 || true
+    "${SUDO[@]}" update-alternatives --install /usr/bin/vi vi "$nvim_path" 60 || true
+  fi
 }
 
 show_summary() {
   local commands=(git ssh curl jq yq rg fzf python3 uv pipx pre-commit shellcheck gh) missing=() item
+  has eza && commands+=(eza) || has exa && commands+=(exa)
   $INSTALL_DOCKER && commands+=(docker)
   $INSTALL_IAC && commands+=(terraform ansible tflint terraform-docs)
   $INSTALL_K8S && commands+=(kubectl helm kustomize k9s kubectx kubens)
   $INSTALL_SECURITY && commands+=(trivy gitleaks sops age)
   [[ "$CLOUD" == aws ]] && commands+=(aws); [[ "$CLOUD" == azure ]] && commands+=(az); [[ "$CLOUD" == gcp ]] && commands+=(gcloud)
   $INSTALL_NEOVIM && commands+=(nvim)
+  $INSTALL_SHELL && commands+=(zsh)
   for item in "${commands[@]}"; do has "$item" || missing+=("$item"); done
   ((${#missing[@]})) && warn "Not found in current PATH: ${missing[*]}" || ok "All selected tools are available"
   is_wsl && warn "Docker on WSL requires systemd or Docker Desktop WSL integration"
-  printf '\nOpen a new terminal to apply PATH, shell and Docker-group changes.\n'
+  printf '\nNext steps:\n'
+  printf '  1) Set the terminal font to MesloLGS NF (required for Powerlevel10k icons).\n'
+  printf '  2) Open a new terminal (or run zsh). Powerlevel10k will start its wizard on first run.\n'
+  $INSTALL_NEOVIM && printf '  3) Start Neovim with nvim; kickstart.nvim installs plugins on first launch.\n'
+  printf 'PATH, shell and Docker-group changes apply after a new login.\n'
 }
 
 main() {
