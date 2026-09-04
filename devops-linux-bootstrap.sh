@@ -273,7 +273,16 @@ install_kubectx_kubens() {
   [[ -e "$LOCAL_BIN/kubens" ]] || ln -sf "$dir/kubens" "$LOCAL_BIN/kubens"
 }
 
-install_krew_and_plugins() {
+install_krew_and_plugins() (
+  unset GIT_ASKPASS SSH_ASKPASS
+  local git_config_var
+  for git_config_var in ${!GIT_CONFIG_@}; do
+    unset "$git_config_var"
+  done
+  export GIT_CONFIG_GLOBAL=/dev/null
+  export GIT_CONFIG_NOSYSTEM=1
+  export GIT_TERMINAL_PROMPT=0
+
   has kubectl || { warn "kubectl not found; skipping krew"; return; }
   export PATH="${KREW_ROOT:-$HOME/.krew}/bin:${PATH}"
   if ! kubectl krew version >/dev/null 2>&1; then
@@ -297,7 +306,7 @@ install_krew_and_plugins() {
       kubectl krew install "$plugin" || warn "Failed to install krew plugin: $plugin"
     fi
   done
-}
+)
 
 install_kubernetes() {
   install_kubectl; install_helm
