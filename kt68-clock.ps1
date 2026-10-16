@@ -1,5 +1,6 @@
 $ErrorActionPreference = "Stop"
 
+try {
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -14,6 +15,7 @@ public static class Kt68Clock {
     const ushort Vendor = 0x05AC;
     const ushort Product = 0x024F;
     const ushort UsagePage = 0xFF13;
+    const ushort Usage = 0x01;
     const uint DigcfPresent = 0x02;
     const uint DigcfDeviceInterface = 0x10;
     const uint GenericRead = 0x80000000;
@@ -23,6 +25,9 @@ public static class Kt68Clock {
     const uint OpenExisting = 3;
     const int HidpStatusSuccess = 0x00110000;
     static readonly IntPtr InvalidHandle = new IntPtr(-1);
+    static string Raw18 = "";
+    static string Raw35 = "";
+    static string Raw02 = "";
 
     static readonly Dictionary<char, string[]> Glyphs = new Dictionary<char, string[]> {
         { '0', new[] { "###", "# #", "# #", "# #", "###" } },
@@ -95,8 +100,14 @@ public static class Kt68Clock {
     [DllImport("hid.dll", SetLastError = true)]
     static extern bool HidD_SetFeature(IntPtr handle, byte[] buffer, int length);
 
+    [DllImport("hid.dll", SetLastError = true)]
+    static extern bool HidD_GetFeature(IntPtr handle, byte[] buffer, int length);
+
     [DllImport("hid.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     static extern bool HidD_GetProductString(IntPtr handle, byte[] buffer, int length);
+
+    [DllImport("hid.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool HidD_GetManufacturerString(IntPtr handle, byte[] buffer, int length);
 
     [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     static extern IntPtr SetupDiGetClassDevs(ref Guid classGuid, string enumerator, IntPtr parent, uint flags);
@@ -123,26 +134,48 @@ public static class Kt68Clock {
             if (handle == InvalidHandle || handle == IntPtr.Zero) {
                 handle = Open();
                 if (handle == InvalidHandle || handle == IntPtr.Zero) {
+                    Log("waiting");
                     System.Threading.Thread.Sleep(1000);
                     continue;
                 }
-                Console.WriteLine("keyboard connected");
             }
             DateTime moment = DateTime.Now;
-            if (!ShowFrame(handle, Pixels(moment))) {
+            byte[] status = new byte[3];
+            if (!ShowFrame(handle, Pixels(moment), status)) {
                 CloseHandle(handle);
                 handle = InvalidHandle;
-                Console.WriteLine("keyboard disconnected, waiting");
+                Log("keyboard disconnected, waiting");
                 System.Threading.Thread.Sleep(1000);
                 continue;
             }
             string label = moment.ToString("dd/MM HH:mm:ss");
             if (label != shown) {
-                Console.WriteLine(label);
+                string line = label + " 18=" + status[0].ToString("X2") + " 35=" + status[1].ToString("X2") + " 02=" + status[2].ToString("X2");
+                if (shown == null) {
+                    line += " raw18=" + Raw18 + " raw35=" + Raw35 + " raw02=" + Raw02;
+                }
+                Log(line);
                 shown = label;
             }
             System.Threading.Thread.Sleep(50);
         }
+    }
+
+    static void Log(string line) {
+        Console.WriteLine(line);
+        Console.Out.Flush();
+    }
+
+    static string Hex(byte[] buffer, int count) {
+        string[] parts = new string[count];
+        for (int i = 0; i < count; i++) {
+            parts[i] = buffer[i].ToString("X2");
+        }
+        return string.Join(" ", parts);
+    }
+
+    static string Wide(byte[] buffer) {
+        return System.Text.Encoding.Unicode.GetString(buffer).TrimEnd('\0');
     }
 
     static IntPtr Open() {
@@ -205,30 +238,75 @@ public static class Kt68Clock {
         }
         HIDP_CAPS caps = new HIDP_CAPS();
         caps.Reserved = new ushort[17];
-        int status = HidP_GetCaps(preparsed, ref caps);
+        int capsStatus = HidP_GetCaps(preparsed, ref caps);
         HidD_FreePreparsedData(preparsed);
-        if (status != HidpStatusSuccess || caps.UsagePage != UsagePage) {
+        if (capsStatus != HidpStatusSuccess || caps.UsagePage != UsagePage || caps.Usage != Usage) {
             CloseHandle(handle);
             return InvalidHandle;
         }
         byte[] product = new byte[254];
-        if (HidD_GetProductString(handle, product, product.Length)) {
-            string name = System.Text.Encoding.Unicode.GetString(product).TrimEnd('\0');
-            if (name.IndexOf("KT68", StringComparison.OrdinalIgnoreCase) < 0) {
-                CloseHandle(handle);
-                return InvalidHandle;
-            }
+        byte[] maker = new byte[254];
+        if (!HidD_GetProductString(handle, product, product.Length) || !HidD_GetManufacturerString(handle, maker, maker.Length)) {
+            CloseHandle(handle);
+            return InvalidHandle;
         }
+        string name = Wide(product);
+        string manufacturer = Wide(maker);
+        if (name.IndexOf("KT68", StringComparison.OrdinalIgnoreCase) < 0 || manufacturer.IndexOf("SONiX", StringComparison.OrdinalIgnoreCase) < 0) {
+            CloseHandle(handle);
+            return InvalidHandle;
+        }
+        Log("opened vid=05AC pid=024F page=" + caps.UsagePage.ToString("X4") + " usage=" + caps.Usage.ToString("X4") + " product=" + name + " maker=" + manufacturer + " path=" + path);
         return handle;
     }
 
-    static bool Feature(IntPtr handle, byte[] payload, int pauseMs) {
+    static bool SetPayload(IntPtr handle, byte[] payload) {
         byte[] buffer = new byte[ReportSize];
         Buffer.BlockCopy(payload, 0, buffer, 1, Math.Min(payload.Length, 64));
         if (!HidD_SetFeature(handle, buffer, buffer.Length)) {
+            Log("set feature failed " + Marshal.GetLastWin32Error());
             return false;
         }
-        System.Threading.Thread.Sleep(pauseMs);
+        return true;
+    }
+
+    static bool ReadPayload(IntPtr handle, out byte[] buffer) {
+        buffer = new byte[ReportSize];
+        if (!HidD_GetFeature(handle, buffer, buffer.Length)) {
+            Log("get feature failed " + Marshal.GetLastWin32Error());
+            return false;
+        }
+        return true;
+    }
+
+    static bool Command(IntPtr handle, byte[] payload, int pauseMs, out byte status) {
+        status = 0;
+        string raw = "";
+        for (int attempt = 0; attempt < 2; attempt++) {
+            if (!SetPayload(handle, payload)) {
+                return false;
+            }
+            System.Threading.Thread.Sleep(pauseMs);
+            byte[] buffer;
+            if (!ReadPayload(handle, out buffer)) {
+                return false;
+            }
+            status = buffer[4];
+            raw = Hex(buffer, 8);
+            if (status != 0xFF) {
+                break;
+            }
+            if (attempt == 0) {
+                Log("status FF, retry " + payload[1].ToString("X2"));
+            }
+        }
+        if (payload.Length > 1 && payload[1] == 0x18) {
+            Raw18 = raw;
+        } else if (payload.Length > 1 && payload[1] == 0x35) {
+            Raw35 = raw;
+        } else if (payload.Length > 1 && payload[1] == 0x02) {
+            Raw02 = raw;
+        }
         return true;
     }
 
@@ -262,27 +340,32 @@ public static class Kt68Clock {
         return blob;
     }
 
-    static bool ShowFrame(IntPtr handle, byte[] blob) {
-        if (!Feature(handle, new byte[] { 0x04, 0x18 }, 15)) {
+    static bool ShowFrame(IntPtr handle, byte[] blob, byte[] status) {
+        if (!Command(handle, new byte[] { 0x04, 0x18 }, 15, out status[0])) {
             return false;
         }
         byte[] preamble = new byte[64];
         preamble[0] = 0x04;
         preamble[1] = 0x35;
         preamble[8] = 0x10;
-        if (!Feature(handle, preamble, 15)) {
+        if (!Command(handle, preamble, 15, out status[1])) {
             return false;
         }
         for (int offset = 0; offset < FrameBytes; offset += 64) {
             byte[] chunk = new byte[64];
             Buffer.BlockCopy(blob, offset, chunk, 0, 64);
-            if (!Feature(handle, chunk, 2)) {
+            if (!SetPayload(handle, chunk)) {
                 return false;
             }
+            System.Threading.Thread.Sleep(2);
         }
-        return Feature(handle, new byte[] { 0x04, 0x02 }, 15);
+        return Command(handle, new byte[] { 0x04, 0x02 }, 15, out status[2]);
     }
 }
 "@
 
 [Kt68Clock]::Run()
+} catch {
+    [Console]::Error.WriteLine($_.ToString())
+    exit 1
+}
