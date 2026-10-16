@@ -7,6 +7,7 @@ if command -v powershell.exe >/dev/null 2>&1; then
 else
   powershell=(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe)
 fi
+cd /mnt/c
 while true; do
   "${powershell[@]}" -NoProfile -ExecutionPolicy Bypass -File "$ps1"
   sleep 2
